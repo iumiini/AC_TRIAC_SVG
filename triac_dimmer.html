@@ -132,6 +132,15 @@
             box-shadow: 0 0 8px rgba(255, 102, 204, 0.5);
         }
 
+        #speedSlider {
+            background: linear-gradient(to right, #333, #00ff88);
+        }
+
+        #speedSlider::-webkit-slider-thumb {
+            background: #00ff88;
+            box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+        }
+
         .value-display {
             background: #0f0f23;
             padding: 6px 12px;
@@ -471,11 +480,15 @@
                 <line x1="50" y1="190" x2="50" y2="125" stroke="#666" stroke-width="2"/>
                 <line x1="50" y1="125" x2="78" y2="125" stroke="#666" stroke-width="2"/>
 
-                <!-- ====== CURRENT FLOW PATHS ====== -->
+                <!-- ====== CURRENT FLOW PATHS (分段顯示) ====== -->
 
-                <!-- Positive half cycle: AC(L+) → Q1(D→S) → Q2(S→D) → LED → AC(N) -->
-                <g id="currentPositive" class="current-flow">
+                <!-- 正半週: AC(L+) → Q1(D→S) → Q2(S→D) → LED → AC(N) -->
+                <!-- 輸入段: AC → Q1 (Q2 ON 時顯示) -->
+                <g id="currentPosInput" class="current-flow">
                     <path d="M85,95 L110,95" marker-end="url(#arrowBlue)"/>
+                </g>
+                <!-- 輸出段: Q2 → LED → N (兩者都 ON 時顯示) -->
+                <g id="currentPosOutput" class="current-flow">
                     <path d="M210,95 L240,95" marker-end="url(#arrowBlue)"/>
                     <path d="M340,95 L385,95" marker-end="url(#arrowBlue)"/>
                     <path d="M425,95 L455,95" marker-end="url(#arrowBlue)"/>
@@ -484,13 +497,17 @@
                     <path d="M50,185 L50,130" marker-end="url(#arrowBlue)"/>
                 </g>
 
-                <!-- Negative half cycle: AC(N+) → LED → Q2(D→S) → Q1(S→D) → AC(L) -->
-                <g id="currentNegative" class="current-flow">
+                <!-- 負半週: AC(N+) → LED → Q2(D→S) → Q1(S→D) → AC(L) -->
+                <!-- 輸入段: N → LED → Q2 (Q1 ON 時顯示) -->
+                <g id="currentNegInput" class="current-flow">
                     <path d="M50,130 L50,185" marker-end="url(#arrowBlue)"/>
                     <path d="M55,190 L455,190" marker-end="url(#arrowBlue)"/>
                     <path d="M460,185 L460,100" marker-end="url(#arrowBlue)"/>
                     <path d="M455,95 L425,95" marker-end="url(#arrowBlue)"/>
                     <path d="M385,95 L340,95" marker-end="url(#arrowBlue)"/>
+                </g>
+                <!-- 輸出段: Q1 → L (兩者都 ON 時顯示) -->
+                <g id="currentNegOutput" class="current-flow">
                     <path d="M240,95 L210,95" marker-end="url(#arrowBlue)"/>
                     <path d="M110,95 L85,95" marker-end="url(#arrowBlue)"/>
                 </g>
@@ -548,6 +565,13 @@
                     <input type="range" id="deadTime2Slider" min="1" max="20" value="5">
                 </div>
                 <div class="value-display dt2"><span id="deadTime2Value">5</span>°</div>
+            </div>
+            <div class="control-row">
+                <div class="slider-container">
+                    <span class="slider-label" style="color: #00ff88;">動畫速度 (ms/週期)</span>
+                    <input type="range" id="speedSlider" min="2000" max="20000" value="8000" step="500">
+                </div>
+                <div class="value-display" style="color: #00ff88;"><span id="speedValue">8000</span>ms</div>
             </div>
         </div>
 
@@ -685,7 +709,7 @@
             lowerGateY: 200,
             gateAmplitude: 18,
             totalDegrees: 720,
-            animationSpeed: 6000
+            animationSpeed: 8000
         };
 
         let dimmingPercent = 50;
@@ -701,10 +725,15 @@
         const deadTime1ValueDisplay = document.getElementById('deadTime1Value');
         const deadTime2Slider = document.getElementById('deadTime2Slider');
         const deadTime2ValueDisplay = document.getElementById('deadTime2Value');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValueDisplay = document.getElementById('speedValue');
         const mosUpper = document.getElementById('mosUpper');
         const mosLower = document.getElementById('mosLower');
-        const currentPositive = document.getElementById('currentPositive');
-        const currentNegative = document.getElementById('currentNegative');
+        // 分段電流路徑
+        const currentPosInput = document.getElementById('currentPosInput');
+        const currentPosOutput = document.getElementById('currentPosOutput');
+        const currentNegInput = document.getElementById('currentNegInput');
+        const currentNegOutput = document.getElementById('currentNegOutput');
         const upperStatus = document.getElementById('upperStatus');
         const lowerStatus = document.getElementById('lowerStatus');
         const dt1Status = document.getElementById('dt1Status');
@@ -850,37 +879,45 @@
             if (normalizedPhase < 180) {
                 phaseDesc = '正半週';
                 if (normalizedPhase < deadTime1) {
+                    // 步驟1: Q2先ON，AC→Q1箭頭出現
                     q2On = true;
                     inDT1 = true;
-                    stateDesc = 'Q2 ON (等待 Q1)';
+                    stateDesc = '① Q2 ON + AC→Q1';
                 } else if (normalizedPhase < conductionEndAngle) {
+                    // 步驟2-3: Q1也ON，電流流向N箭頭出現
                     q1On = true;
                     q2On = true;
-                    stateDesc = 'Q1+Q2 導通中';
+                    stateDesc = '③ 電流→N導通中';
                 } else if (normalizedPhase < conductionEndAngle + deadTime2 && normalizedPhase < 180) {
+                    // 步驟5-6: Q1 OFF，電流→N消失
                     q2On = true;
                     inDT2 = true;
-                    stateDesc = 'Q2 ON (Q1已關)';
+                    stateDesc = '⑤ Q1 OFF (→N消失)';
                 } else {
-                    stateDesc = '關斷';
+                    // 步驟7: Q2 OFF，AC→Q1消失
+                    stateDesc = '⑦ 全部關斷';
                 }
             } else {
                 phaseDesc = '負半週';
                 const negPhase = normalizedPhase - 180;
                 if (negPhase < deadTime1) {
+                    // 步驟1: Q1先ON，N→LED→Q2箭頭出現
                     q1On = true;
                     inDT1 = true;
-                    stateDesc = 'Q1 ON (等待 Q2)';
+                    stateDesc = '① Q1 ON + N→Q2';
                 } else if (negPhase < conductionEndAngle) {
+                    // 步驟2-3: Q2也ON，電流流向L箭頭出現
                     q1On = true;
                     q2On = true;
-                    stateDesc = 'Q1+Q2 導通中';
+                    stateDesc = '③ 電流→L導通中';
                 } else if (negPhase < conductionEndAngle + deadTime2 && negPhase < 180) {
+                    // 步驟5-6: Q2 OFF，電流→L消失
                     q1On = true;
                     inDT2 = true;
-                    stateDesc = 'Q1 ON (Q2已關)';
+                    stateDesc = '⑤ Q2 OFF (→L消失)';
                 } else {
-                    stateDesc = '關斷';
+                    // 步驟7: Q1 OFF，N→Q2消失
+                    stateDesc = '⑦ 全部關斷';
                 }
             }
 
@@ -903,14 +940,33 @@
             dt1Status.style.opacity = inDT1 ? '1' : '0.3';
             dt2Status.style.opacity = inDT2 ? '1' : '0.3';
 
-            const showPositiveCurrent = bothOn && isPositiveHalf;
-            const showNegativeCurrent = bothOn && !isPositiveHalf;
+            // 正半週電流流動邏輯:
+            // 1. Q2 ON 時: 顯示輸入段 (AC → Q1)
+            // 2. Q1 + Q2 都 ON: 顯示輸入段 + 輸出段 (完整電流路徑)
+            // 3. Q1 OFF 後 (DT2期間): 只顯示輸入段
+            // 4. Q2 OFF 後: 全部消失
+            const showPosInput = isPositiveHalf && q2On;
+            const showPosOutput = isPositiveHalf && bothOn;
 
-            currentPositive.classList.toggle('active', showPositiveCurrent);
-            currentPositive.classList.toggle('flow-forward', showPositiveCurrent);
-            currentNegative.classList.toggle('active', showNegativeCurrent);
-            currentNegative.classList.toggle('flow-backward', showNegativeCurrent);
+            currentPosInput.classList.toggle('active', showPosInput);
+            currentPosInput.classList.toggle('flow-forward', showPosInput);
+            currentPosOutput.classList.toggle('active', showPosOutput);
+            currentPosOutput.classList.toggle('flow-forward', showPosOutput);
 
+            // 負半週電流流動邏輯:
+            // 1. Q1 ON 時: 顯示輸入段 (N → LED → Q2)
+            // 2. Q1 + Q2 都 ON: 顯示輸入段 + 輸出段 (完整電流路徑)
+            // 3. Q2 OFF 後 (DT2期間): 只顯示輸入段
+            // 4. Q1 OFF 後: 全部消失
+            const showNegInput = !isPositiveHalf && q1On;
+            const showNegOutput = !isPositiveHalf && bothOn;
+
+            currentNegInput.classList.toggle('active', showNegInput);
+            currentNegInput.classList.toggle('flow-backward', showNegInput);
+            currentNegOutput.classList.toggle('active', showNegOutput);
+            currentNegOutput.classList.toggle('flow-backward', showNegOutput);
+
+            // LED 只有在兩者都 ON 時才亮
             ledRays.style.opacity = bothOn ? '1' : '0.3';
             ledGlowCircle.setAttribute('opacity', bothOn ? '0.3' : '0');
 
@@ -951,6 +1007,11 @@
             deadTime2 = parseInt(e.target.value);
             deadTime2ValueDisplay.textContent = deadTime2;
             updateScope();
+        });
+
+        speedSlider.addEventListener('input', (e) => {
+            config.animationSpeed = parseInt(e.target.value);
+            speedValueDisplay.textContent = config.animationSpeed;
         });
 
         function init() {
