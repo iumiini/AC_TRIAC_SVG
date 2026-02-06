@@ -1087,22 +1087,24 @@
         }
 
         // 計算步驟點位 (每個週期的關鍵時刻)
+        // 加上小偏移量確保顯示轉換後的狀態
         function calculateStepPoints() {
             const conductionEndAngle = getConductionAngle(dimmingPercent);
+            const epsilon = 0.5; // 小偏移量，確保跨過邊界
             stepPoints = [];
 
             for (let cycle = 0; cycle < 2; cycle++) {
                 const offset = cycle * 360;
-                // 正半週
-                stepPoints.push(offset + 0);                              // Q2 ON
-                stepPoints.push(offset + deadTime1);                      // Q1 ON (DT1結束)
-                stepPoints.push(offset + conductionEndAngle);             // Q1 OFF
-                stepPoints.push(offset + conductionEndAngle + deadTime2); // Q2 OFF (DT2結束)
-                // 負半週
-                stepPoints.push(offset + 180);                            // Q1 ON
-                stepPoints.push(offset + 180 + deadTime1);                // Q2 ON (DT1結束)
-                stepPoints.push(offset + 180 + conductionEndAngle);       // Q2 OFF
-                stepPoints.push(offset + 180 + conductionEndAngle + deadTime2); // Q1 OFF (DT2結束)
+                // 正半週 (Q2先ON → DT1 → Q1 ON → 導通 → Q1 OFF → DT2 → Q2 OFF)
+                stepPoints.push(offset + epsilon);                                      // Q2 剛ON
+                stepPoints.push(offset + deadTime1 + epsilon);                          // Q1 剛ON (DT1結束後)
+                stepPoints.push(offset + conductionEndAngle + epsilon);                 // Q1 剛OFF
+                stepPoints.push(offset + conductionEndAngle + deadTime2 + epsilon);     // Q2 剛OFF (DT2結束後)
+                // 負半週 (Q1先ON → DT1 → Q2 ON → 導通 → Q2 OFF → DT2 → Q1 OFF)
+                stepPoints.push(offset + 180 + epsilon);                                // Q1 剛ON
+                stepPoints.push(offset + 180 + deadTime1 + epsilon);                    // Q2 剛ON (DT1結束後)
+                stepPoints.push(offset + 180 + conductionEndAngle + epsilon);           // Q2 剛OFF
+                stepPoints.push(offset + 180 + conductionEndAngle + deadTime2 + epsilon); // Q1 剛OFF (DT2結束後)
             }
             // 排序並去重
             stepPoints = [...new Set(stepPoints)].sort((a, b) => a - b);
