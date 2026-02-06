@@ -132,13 +132,91 @@
             box-shadow: 0 0 8px rgba(255, 102, 204, 0.5);
         }
 
-        #speedSlider {
-            background: linear-gradient(to right, #333, #00ff88);
+        /* Playback control buttons */
+        .playback-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        #speedSlider::-webkit-slider-thumb {
+        .speed-btn-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .speed-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            background: #333;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .speed-btn:hover {
+            background: #444;
+        }
+
+        .speed-btn.active {
             background: #00ff88;
-            box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+            color: #000;
+            font-weight: bold;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .play-btn {
+            background: #00cc00;
+            color: #000;
+        }
+
+        .play-btn:hover {
+            background: #00ff00;
+        }
+
+        .pause-btn {
+            background: #ff6600;
+            color: #000;
+        }
+
+        .pause-btn:hover {
+            background: #ff8833;
+        }
+
+        .step-btn {
+            background: #0088ff;
+            color: #fff;
+            display: none;
+        }
+
+        .step-btn:hover {
+            background: #00aaff;
+        }
+
+        .step-btn.visible {
+            display: inline-block;
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .playback-label {
+            color: #888;
+            font-size: 12px;
+            margin-right: 5px;
         }
 
         .value-display {
@@ -567,11 +645,19 @@
                 <div class="value-display dt2"><span id="deadTime2Value">5</span>°</div>
             </div>
             <div class="control-row">
-                <div class="slider-container">
-                    <span class="slider-label" style="color: #00ff88;">動畫速度 (ms/週期)</span>
-                    <input type="range" id="speedSlider" min="2000" max="20000" value="8000" step="500">
+                <div class="playback-controls">
+                    <span class="playback-label">速度:</span>
+                    <div class="speed-btn-group">
+                        <button class="speed-btn" data-speed="20000">0.5x</button>
+                        <button class="speed-btn" data-speed="12000">1x</button>
+                        <button class="speed-btn active" data-speed="8000">1.5x</button>
+                        <button class="speed-btn" data-speed="5000">2x</button>
+                        <button class="speed-btn" data-speed="3000">3x</button>
+                    </div>
+                    <button class="control-btn play-btn" id="playBtn" disabled>播放</button>
+                    <button class="control-btn pause-btn" id="pauseBtn">暫停</button>
+                    <button class="control-btn step-btn" id="stepBtn">下一步</button>
                 </div>
-                <div class="value-display" style="color: #00ff88;"><span id="speedValue">8000</span>ms</div>
             </div>
         </div>
 
@@ -719,14 +805,19 @@
         let animationId = null;
         let lastTimestamp = 0;
 
+        let isPaused = false;
+        let stepPoints = []; // 用於存儲步驟點位
+
         const dimmingSlider = document.getElementById('dimmingSlider');
         const dimmingValueDisplay = document.getElementById('dimmingValue');
         const deadTime1Slider = document.getElementById('deadTime1Slider');
         const deadTime1ValueDisplay = document.getElementById('deadTime1Value');
         const deadTime2Slider = document.getElementById('deadTime2Slider');
         const deadTime2ValueDisplay = document.getElementById('deadTime2Value');
-        const speedSlider = document.getElementById('speedSlider');
-        const speedValueDisplay = document.getElementById('speedValue');
+        const speedBtns = document.querySelectorAll('.speed-btn');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stepBtn = document.getElementById('stepBtn');
         const mosUpper = document.getElementById('mosUpper');
         const mosLower = document.getElementById('mosLower');
         // 分段電流路徑
@@ -962,9 +1053,9 @@
             const showNegOutput = !isPositiveHalf && bothOn;
 
             currentNegInput.classList.toggle('active', showNegInput);
-            currentNegInput.classList.toggle('flow-backward', showNegInput);
+            currentNegInput.classList.toggle('flow-forward', showNegInput);
             currentNegOutput.classList.toggle('active', showNegOutput);
-            currentNegOutput.classList.toggle('flow-backward', showNegOutput);
+            currentNegOutput.classList.toggle('flow-forward', showNegOutput);
 
             // LED 只有在兩者都 ON 時才亮
             ledRays.style.opacity = bothOn ? '1' : '0.3';
@@ -980,6 +1071,10 @@
         }
 
         function animate(timestamp) {
+            if (isPaused) {
+                lastTimestamp = 0;
+                return;
+            }
             if (!lastTimestamp) lastTimestamp = timestamp;
             const delta = timestamp - lastTimestamp;
             lastTimestamp = timestamp;
@@ -991,31 +1086,104 @@
             animationId = requestAnimationFrame(animate);
         }
 
+        // 計算步驟點位 (每個週期的關鍵時刻)
+        function calculateStepPoints() {
+            const conductionEndAngle = getConductionAngle(dimmingPercent);
+            stepPoints = [];
+
+            for (let cycle = 0; cycle < 2; cycle++) {
+                const offset = cycle * 360;
+                // 正半週
+                stepPoints.push(offset + 0);                              // Q2 ON
+                stepPoints.push(offset + deadTime1);                      // Q1 ON (DT1結束)
+                stepPoints.push(offset + conductionEndAngle);             // Q1 OFF
+                stepPoints.push(offset + conductionEndAngle + deadTime2); // Q2 OFF (DT2結束)
+                // 負半週
+                stepPoints.push(offset + 180);                            // Q1 ON
+                stepPoints.push(offset + 180 + deadTime1);                // Q2 ON (DT1結束)
+                stepPoints.push(offset + 180 + conductionEndAngle);       // Q2 OFF
+                stepPoints.push(offset + 180 + conductionEndAngle + deadTime2); // Q1 OFF (DT2結束)
+            }
+            // 排序並去重
+            stepPoints = [...new Set(stepPoints)].sort((a, b) => a - b);
+        }
+
+        // 找到下一個步驟點
+        function getNextStepPoint(currentPhase) {
+            for (const point of stepPoints) {
+                if (point > currentPhase + 0.5) { // 加一點容差
+                    return point;
+                }
+            }
+            // 如果超過最後一個點，回到第一個
+            return stepPoints[0];
+        }
+
+        function pauseAnimation() {
+            isPaused = true;
+            playBtn.disabled = false;
+            pauseBtn.disabled = true;
+            stepBtn.classList.add('visible');
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+
+        function playAnimation() {
+            isPaused = false;
+            playBtn.disabled = true;
+            pauseBtn.disabled = false;
+            stepBtn.classList.remove('visible');
+            lastTimestamp = 0;
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function stepToNext() {
+            calculateStepPoints();
+            const nextPoint = getNextStepPoint(animationPhase);
+            animationPhase = nextPoint % config.totalDegrees;
+            updateCircuitState(animationPhase);
+        }
+
         dimmingSlider.addEventListener('input', (e) => {
             dimmingPercent = parseInt(e.target.value);
             dimmingValueDisplay.textContent = dimmingPercent;
             updateScope();
+            calculateStepPoints();
         });
 
         deadTime1Slider.addEventListener('input', (e) => {
             deadTime1 = parseInt(e.target.value);
             deadTime1ValueDisplay.textContent = deadTime1;
             updateScope();
+            calculateStepPoints();
         });
 
         deadTime2Slider.addEventListener('input', (e) => {
             deadTime2 = parseInt(e.target.value);
             deadTime2ValueDisplay.textContent = deadTime2;
             updateScope();
+            calculateStepPoints();
         });
 
-        speedSlider.addEventListener('input', (e) => {
-            config.animationSpeed = parseInt(e.target.value);
-            speedValueDisplay.textContent = config.animationSpeed;
+        // 速度按鈕
+        speedBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                speedBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                config.animationSpeed = parseInt(btn.dataset.speed);
+            });
         });
+
+        // 播放/暫停按鈕
+        playBtn.addEventListener('click', playAnimation);
+        pauseBtn.addEventListener('click', pauseAnimation);
+        stepBtn.addEventListener('click', stepToNext);
 
         function init() {
             updateScope();
+            calculateStepPoints();
             animationId = requestAnimationFrame(animate);
         }
 
