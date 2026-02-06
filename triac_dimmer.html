@@ -26,6 +26,7 @@
             color: #00d4ff;
             margin-bottom: 20px;
             text-align: center;
+            font-size: 1.5em;
         }
 
         .container {
@@ -313,6 +314,10 @@
             color: #ff9900;
         }
 
+        .analysis-content .good {
+            color: #00ff00;
+        }
+
         .timing-diagram {
             background: #1a1a2e;
             padding: 10px;
@@ -323,16 +328,28 @@
             white-space: pre;
             overflow-x: auto;
         }
+
+        .circuit-diagram-text {
+            background: #1a1a2e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 10px;
+            white-space: pre;
+            overflow-x: auto;
+            color: #aaa;
+        }
     </style>
 </head>
 <body>
-    <h1>TRIAC Trailing Edge 調光器 - 進階開關時序</h1>
+    <h1>TRIAC Trailing Edge 調光器 - 背對背 MOSFET (S-S 相接)</h1>
 
     <div class="container">
         <!-- Circuit Diagram Section -->
         <div class="circuit-section">
-            <div class="section-title">電路圖 - AC → Q1(上橋) → Q2(下橋) → LED → AC (串聯)</div>
-            <svg id="circuitSvg" viewBox="0 0 800 220" width="100%" height="220">
+            <div class="section-title">電路圖 - AC → Q1(D) → [S-S共接] → Q2(D) → LED → AC (背對背配置)</div>
+            <svg id="circuitSvg" viewBox="0 0 850 240" width="100%" height="240">
                 <defs>
                     <!-- Arrow marker for current flow -->
                     <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
@@ -353,131 +370,158 @@
                 <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
                     <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1a1a3e" stroke-width="0.5"/>
                 </pattern>
-                <rect width="800" height="220" fill="url(#grid)"/>
+                <rect width="850" height="240" fill="url(#grid)"/>
 
-                <!-- ====== SERIES CIRCUIT: AC → Q1 → Q2 → LED → AC ====== -->
+                <!-- ====== BACK-TO-BACK MOSFET CIRCUIT ====== -->
+                <!-- AC(L) → Q1(D) → Q1(S) ══ Q2(S) → Q2(D) → LED → AC(N) -->
 
                 <!-- AC Source (左側) -->
-                <g transform="translate(30, 60)">
-                    <circle cx="35" cy="50" r="30" fill="none" stroke="#ffaa00" stroke-width="2"/>
-                    <text x="35" y="45" text-anchor="middle" fill="#ffaa00" font-size="12" font-weight="bold">AC</text>
-                    <path d="M22,55 Q28,42 35,55 Q42,68 48,55" fill="none" stroke="#ffaa00" stroke-width="2"/>
-                    <text x="35" y="100" text-anchor="middle" fill="#888" font-size="10">110V</text>
-                    <!-- AC+ terminal -->
-                    <circle cx="65" cy="35" r="3" fill="#ffaa00"/>
-                    <text x="75" y="38" fill="#ffaa00" font-size="9">L</text>
-                    <!-- AC- terminal -->
-                    <circle cx="65" cy="65" r="3" fill="#888"/>
-                    <text x="75" y="68" fill="#888" font-size="9">N</text>
+                <g transform="translate(20, 70)">
+                    <circle cx="30" cy="40" r="28" fill="none" stroke="#ffaa00" stroke-width="2"/>
+                    <text x="30" y="36" text-anchor="middle" fill="#ffaa00" font-size="11" font-weight="bold">AC</text>
+                    <path d="M18,44 Q24,32 30,44 Q36,56 42,44" fill="none" stroke="#ffaa00" stroke-width="2"/>
+                    <text x="30" y="85" text-anchor="middle" fill="#888" font-size="9">110V</text>
+                    <!-- AC L terminal -->
+                    <circle cx="58" cy="25" r="3" fill="#ffaa00"/>
+                    <text x="68" y="28" fill="#ffaa00" font-size="8">L</text>
+                    <!-- AC N terminal -->
+                    <circle cx="58" cy="55" r="3" fill="#888"/>
+                    <text x="68" y="58" fill="#888" font-size="8">N</text>
                 </g>
 
-                <!-- Connection: AC to Q1 -->
-                <line x1="98" y1="95" x2="140" y2="95" stroke="#666" stroke-width="2"/>
+                <!-- Connection: AC L to Q1 Drain -->
+                <line x1="81" y1="95" x2="115" y2="95" stroke="#666" stroke-width="2"/>
 
-                <!-- Upper MOS (Q1) - 上橋 with body diode -->
-                <g id="mosUpper" class="mos-off" transform="translate(140, 65)">
-                    <rect class="mos-body" x="0" y="0" width="70" height="60" rx="5" stroke="#888" stroke-width="2"/>
-                    <text x="35" y="25" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">Q1</text>
-                    <text x="35" y="40" text-anchor="middle" fill="#fff" font-size="10">上橋</text>
-                    <!-- Body diode symbol -->
-                    <path d="M50,45 L60,50 L50,55 Z" fill="#ff6b6b" opacity="0.6"/>
-                    <line x1="60" y1="45" x2="60" y2="55" stroke="#ff6b6b" stroke-width="1.5" opacity="0.6"/>
+                <!-- Q1 - Upper MOSFET (Drain on left, Source on right) -->
+                <g id="mosUpper" class="mos-off" transform="translate(115, 60)">
+                    <rect class="mos-body" x="0" y="0" width="90" height="70" rx="5" stroke="#888" stroke-width="2"/>
+
+                    <!-- MOSFET symbol inside -->
+                    <text x="45" y="20" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">Q1</text>
+
+                    <!-- D-S labels -->
+                    <text x="8" y="45" fill="#ffaa00" font-size="10" font-weight="bold">D</text>
+                    <text x="75" y="45" fill="#00d4ff" font-size="10" font-weight="bold">S</text>
+
+                    <!-- Body diode (pointing from S to D, i.e., right to left) -->
+                    <g transform="translate(35, 48)">
+                        <!-- Diode triangle pointing left (S→D direction) -->
+                        <polygon points="20,0 8,8 8,-8" fill="#ff6b6b" opacity="0.7"/>
+                        <line x1="8" y1="-8" x2="8" y2="8" stroke="#ff6b6b" stroke-width="2" opacity="0.7"/>
+                        <text x="14" y="18" text-anchor="middle" fill="#ff6b6b" font-size="7">S→D</text>
+                    </g>
+
                     <!-- Gate indicator -->
-                    <rect x="5" y="50" width="12" height="6" rx="1" fill="#00ff00" opacity="0.5"/>
-                    <text x="11" y="56" text-anchor="middle" fill="#00ff00" font-size="7">G</text>
+                    <rect x="38" y="60" width="14" height="6" rx="1" fill="#00ff00" opacity="0.6"/>
+                    <text x="45" y="66" text-anchor="middle" fill="#00ff00" font-size="7">G</text>
                 </g>
 
-                <!-- Connection: Q1 to Q2 -->
-                <line x1="210" y1="95" x2="280" y2="95" stroke="#666" stroke-width="2"/>
+                <!-- Common Source Connection (S-S node) -->
+                <line x1="205" y1="95" x2="245" y2="95" stroke="#00d4ff" stroke-width="3"/>
+                <circle cx="225" cy="95" r="6" fill="#00d4ff"/>
+                <text x="225" y="80" text-anchor="middle" fill="#00d4ff" font-size="9" font-weight="bold">S-S</text>
 
-                <!-- Connection node between Q1 and Q2 -->
-                <circle cx="245" cy="95" r="4" fill="#00d4ff"/>
+                <!-- Q2 - Lower MOSFET (Source on left, Drain on right) -->
+                <g id="mosLower" class="mos-off" transform="translate(245, 60)">
+                    <rect class="mos-body" x="0" y="0" width="90" height="70" rx="5" stroke="#888" stroke-width="2"/>
 
-                <!-- Lower MOS (Q2) - 下橋 with body diode -->
-                <g id="mosLower" class="mos-off" transform="translate(280, 65)">
-                    <rect class="mos-body" x="0" y="0" width="70" height="60" rx="5" stroke="#888" stroke-width="2"/>
-                    <text x="35" y="25" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">Q2</text>
-                    <text x="35" y="40" text-anchor="middle" fill="#fff" font-size="10">下橋</text>
-                    <!-- Body diode symbol -->
-                    <path d="M50,45 L60,50 L50,55 Z" fill="#ff6b6b" opacity="0.6"/>
-                    <line x1="60" y1="45" x2="60" y2="55" stroke="#ff6b6b" stroke-width="1.5" opacity="0.6"/>
+                    <!-- MOSFET symbol inside -->
+                    <text x="45" y="20" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">Q2</text>
+
+                    <!-- S-D labels -->
+                    <text x="8" y="45" fill="#00d4ff" font-size="10" font-weight="bold">S</text>
+                    <text x="75" y="45" fill="#ffaa00" font-size="10" font-weight="bold">D</text>
+
+                    <!-- Body diode (pointing from S to D, i.e., left to right) -->
+                    <g transform="translate(35, 48)">
+                        <!-- Diode triangle pointing right (S→D direction) -->
+                        <polygon points="0,0 12,8 12,-8" fill="#ff6b6b" opacity="0.7"/>
+                        <line x1="12" y1="-8" x2="12" y2="8" stroke="#ff6b6b" stroke-width="2" opacity="0.7"/>
+                        <text x="6" y="18" text-anchor="middle" fill="#ff6b6b" font-size="7">S→D</text>
+                    </g>
+
                     <!-- Gate indicator -->
-                    <rect x="5" y="50" width="12" height="6" rx="1" fill="#00bfff" opacity="0.5"/>
-                    <text x="11" y="56" text-anchor="middle" fill="#00bfff" font-size="7">G</text>
+                    <rect x="38" y="60" width="14" height="6" rx="1" fill="#00bfff" opacity="0.6"/>
+                    <text x="45" y="66" text-anchor="middle" fill="#00bfff" font-size="7">G</text>
                 </g>
 
-                <!-- Connection: Q2 to LED -->
-                <line x1="350" y1="95" x2="420" y2="95" stroke="#666" stroke-width="2"/>
+                <!-- Connection: Q2 Drain to LED -->
+                <line x1="335" y1="95" x2="390" y2="95" stroke="#666" stroke-width="2"/>
 
                 <!-- LED Symbol -->
-                <g id="ledGroup" transform="translate(420, 65)">
+                <g id="ledGroup" transform="translate(390, 65)">
                     <!-- LED body -->
-                    <polygon points="0,30 35,10 35,50" fill="none" stroke="#ff6b6b" stroke-width="2"/>
-                    <line x1="35" y1="10" x2="35" y2="50" stroke="#ff6b6b" stroke-width="2"/>
-                    <!-- Light rays (will glow when on) -->
+                    <polygon points="0,30 30,12 30,48" fill="none" stroke="#ff6b6b" stroke-width="2"/>
+                    <line x1="30" y1="12" x2="30" y2="48" stroke="#ff6b6b" stroke-width="2"/>
+                    <!-- Light rays -->
                     <g id="ledRays" class="led-glow" opacity="0.3">
-                        <line x1="42" y1="15" x2="55" y2="5" stroke="#ff6b6b" stroke-width="2"/>
-                        <line x1="42" y1="25" x2="58" y2="18" stroke="#ff6b6b" stroke-width="2"/>
-                        <polygon points="55,5 50,12 53,3" fill="#ff6b6b"/>
-                        <polygon points="58,18 52,22 55,13" fill="#ff6b6b"/>
+                        <line x1="36" y1="18" x2="48" y2="8" stroke="#ff6b6b" stroke-width="2"/>
+                        <line x1="36" y1="28" x2="50" y2="22" stroke="#ff6b6b" stroke-width="2"/>
+                        <polygon points="48,8 44,14 46,6" fill="#ff6b6b"/>
+                        <polygon points="50,22 45,25 48,17" fill="#ff6b6b"/>
                     </g>
-                    <!-- Glow effect when LED is on -->
-                    <circle id="ledGlowCircle" cx="20" cy="30" r="25" fill="#ff6b6b" opacity="0" filter="url(#ledGlow)"/>
-                    <text x="17" y="75" text-anchor="middle" fill="#ff6b6b" font-size="12">LED</text>
+                    <circle id="ledGlowCircle" cx="15" cy="30" r="22" fill="#ff6b6b" opacity="0" filter="url(#ledGlow)"/>
+                    <text x="15" y="68" text-anchor="middle" fill="#ff6b6b" font-size="11">LED</text>
                 </g>
 
-                <!-- Connection: LED to return (下方迴路) -->
-                <line x1="455" y1="95" x2="500" y2="95" stroke="#666" stroke-width="2"/>
-                <line x1="500" y1="95" x2="500" y2="180" stroke="#666" stroke-width="2"/>
-                <line x1="500" y1="180" x2="65" y2="180" stroke="#666" stroke-width="2"/>
-                <line x1="65" y1="180" x2="65" y2="125" stroke="#666" stroke-width="2"/>
-
-                <!-- Return to AC N terminal -->
-                <line x1="65" y1="125" x2="95" y2="125" stroke="#666" stroke-width="2"/>
+                <!-- Connection: LED to AC N (return path) -->
+                <line x1="420" y1="95" x2="460" y2="95" stroke="#666" stroke-width="2"/>
+                <line x1="460" y1="95" x2="460" y2="190" stroke="#666" stroke-width="2"/>
+                <line x1="460" y1="190" x2="50" y2="190" stroke="#666" stroke-width="2"/>
+                <line x1="50" y1="190" x2="50" y2="125" stroke="#666" stroke-width="2"/>
+                <line x1="50" y1="125" x2="78" y2="125" stroke="#666" stroke-width="2"/>
 
                 <!-- ====== CURRENT FLOW PATHS ====== -->
 
-                <!-- Positive half cycle current (順時針: AC→Q1→Q2→LED→回AC) -->
+                <!-- Positive half cycle: AC(L+) → Q1(D→S) → Q2(S→D) → LED → AC(N) -->
                 <g id="currentPositive" class="current-flow">
-                    <path d="M100,95 L135,95" marker-end="url(#arrowBlue)"/>
-                    <path d="M215,95 L275,95" marker-end="url(#arrowBlue)"/>
-                    <path d="M355,95 L415,95" marker-end="url(#arrowBlue)"/>
-                    <path d="M460,95 L495,95" marker-end="url(#arrowBlue)"/>
-                    <path d="M500,100 L500,175" marker-end="url(#arrowBlue)"/>
-                    <path d="M495,180 L70,180" marker-end="url(#arrowBlue)"/>
-                    <path d="M65,175 L65,130" marker-end="url(#arrowBlue)"/>
+                    <path d="M85,95 L110,95" marker-end="url(#arrowBlue)"/>
+                    <path d="M210,95 L240,95" marker-end="url(#arrowBlue)"/>
+                    <path d="M340,95 L385,95" marker-end="url(#arrowBlue)"/>
+                    <path d="M425,95 L455,95" marker-end="url(#arrowBlue)"/>
+                    <path d="M460,100 L460,185" marker-end="url(#arrowBlue)"/>
+                    <path d="M455,190 L55,190" marker-end="url(#arrowBlue)"/>
+                    <path d="M50,185 L50,130" marker-end="url(#arrowBlue)"/>
                 </g>
 
-                <!-- Negative half cycle current (逆時針) -->
+                <!-- Negative half cycle: AC(N+) → LED → Q2(D→S) → Q1(S→D) → AC(L) -->
                 <g id="currentNegative" class="current-flow">
-                    <path d="M65,130 L65,175" marker-end="url(#arrowBlue)"/>
-                    <path d="M70,180 L495,180" marker-end="url(#arrowBlue)"/>
-                    <path d="M500,175 L500,100" marker-end="url(#arrowBlue)"/>
-                    <path d="M495,95 L460,95" marker-end="url(#arrowBlue)"/>
-                    <path d="M415,95 L355,95" marker-end="url(#arrowBlue)"/>
-                    <path d="M275,95 L215,95" marker-end="url(#arrowBlue)"/>
-                    <path d="M135,95 L100,95" marker-end="url(#arrowBlue)"/>
+                    <path d="M50,130 L50,185" marker-end="url(#arrowBlue)"/>
+                    <path d="M55,190 L455,190" marker-end="url(#arrowBlue)"/>
+                    <path d="M460,185 L460,100" marker-end="url(#arrowBlue)"/>
+                    <path d="M455,95 L425,95" marker-end="url(#arrowBlue)"/>
+                    <path d="M385,95 L340,95" marker-end="url(#arrowBlue)"/>
+                    <path d="M240,95 L210,95" marker-end="url(#arrowBlue)"/>
+                    <path d="M110,95 L85,95" marker-end="url(#arrowBlue)"/>
                 </g>
 
                 <!-- ====== INFO PANELS ====== -->
 
                 <!-- Phase indicator -->
-                <g transform="translate(550, 20)">
-                    <rect x="0" y="0" width="220" height="80" rx="5" fill="#1a1a3e" stroke="#333" stroke-width="1"/>
-                    <text x="110" y="18" text-anchor="middle" fill="#888" font-size="10">當前狀態</text>
-                    <text id="phaseText" x="110" y="38" text-anchor="middle" fill="#00d4ff" font-size="12" font-weight="bold">--</text>
-                    <text id="stateText" x="110" y="55" text-anchor="middle" fill="#aaa" font-size="10">--</text>
-                    <text id="angleText" x="110" y="72" text-anchor="middle" fill="#ffaa00" font-size="10">導通角: 0°</text>
+                <g transform="translate(500, 15)">
+                    <rect x="0" y="0" width="170" height="75" rx="5" fill="#1a1a3e" stroke="#333" stroke-width="1"/>
+                    <text x="85" y="16" text-anchor="middle" fill="#888" font-size="9">當前狀態</text>
+                    <text id="phaseText" x="85" y="34" text-anchor="middle" fill="#00d4ff" font-size="11" font-weight="bold">--</text>
+                    <text id="stateText" x="85" y="50" text-anchor="middle" fill="#aaa" font-size="9">--</text>
+                    <text id="angleText" x="85" y="66" text-anchor="middle" fill="#ffaa00" font-size="9">導通角: 0°</text>
                 </g>
 
                 <!-- Timing sequence info -->
-                <g transform="translate(550, 110)">
-                    <rect x="0" y="0" width="220" height="90" rx="5" fill="#1a1a3e" stroke="#333" stroke-width="1"/>
-                    <text x="110" y="15" text-anchor="middle" fill="#666" font-size="9">開關時序</text>
-                    <text x="10" y="32" fill="#ffaa00" font-size="9">正半週: Q2先ON → DT1 → Q1 ON</text>
-                    <text x="10" y="46" fill="#ffaa00" font-size="9">        Q1先OFF → DT2 → Q2 OFF</text>
-                    <text x="10" y="63" fill="#00bfff" font-size="9">負半週: Q1先ON → DT1 → Q2 ON</text>
-                    <text x="10" y="77" fill="#00bfff" font-size="9">        Q2先OFF → DT2 → Q1 OFF</text>
+                <g transform="translate(500, 100)">
+                    <rect x="0" y="0" width="170" height="85" rx="5" fill="#1a1a3e" stroke="#333" stroke-width="1"/>
+                    <text x="85" y="14" text-anchor="middle" fill="#666" font-size="8">開關時序 (避免體二極體)</text>
+                    <text x="8" y="30" fill="#ffaa00" font-size="8">正半週:</text>
+                    <text x="8" y="42" fill="#ffaa00" font-size="8"> Q2先ON→DT1→Q1 ON</text>
+                    <text x="8" y="54" fill="#ffaa00" font-size="8"> Q1先OFF→DT2→Q2 OFF</text>
+                    <text x="8" y="68" fill="#00bfff" font-size="8">負半週:</text>
+                    <text x="8" y="80" fill="#00bfff" font-size="8"> Q1先ON→DT1→Q2 ON</text>
+                </g>
+
+                <!-- Body diode direction note -->
+                <g transform="translate(500, 195)">
+                    <rect x="0" y="0" width="170" height="35" rx="5" fill="#2a1a1a" stroke="#ff6b6b" stroke-width="1"/>
+                    <text x="85" y="14" text-anchor="middle" fill="#ff6b6b" font-size="8">體二極體方向</text>
+                    <text x="85" y="28" text-anchor="middle" fill="#ff9999" font-size="8">Q1: S→D (右→左) | Q2: S→D (左→右)</text>
                 </g>
             </svg>
         </div>
@@ -511,11 +555,11 @@
         <div class="status-panel">
             <div class="status-item">
                 <div class="status-indicator mos-upper-indicator" id="upperStatus"></div>
-                <span>Q1 上橋</span>
+                <span>Q1</span>
             </div>
             <div class="status-item">
                 <div class="status-indicator mos-lower-indicator" id="lowerStatus"></div>
-                <span>Q2 下橋</span>
+                <span>Q2</span>
             </div>
             <div class="status-item" style="color: #ff9900;">
                 <span id="dt1Status" style="opacity: 0.3;">● DT1</span>
@@ -525,7 +569,7 @@
             </div>
         </div>
 
-        <!-- Oscilloscope Section (2 cycles) -->
+        <!-- Oscilloscope Section -->
         <div class="scope-section">
             <div class="scope-header">
                 <div class="scope-title">▶ OSCILLOSCOPE - 示波器 (2個週期)</div>
@@ -536,10 +580,7 @@
                 </div>
             </div>
             <svg id="scopeSvg" viewBox="0 0 800 250" width="100%" height="250">
-                <!-- Scope background -->
                 <rect width="800" height="250" fill="#0a0a0a"/>
-
-                <!-- Grid -->
                 <defs>
                     <pattern id="scopeGrid" width="43.75" height="50" patternUnits="userSpaceOnUse">
                         <path d="M 43.75 0 L 0 0 0 50" fill="none" stroke="#1a3a1a" stroke-width="0.5"/>
@@ -550,25 +591,18 @@
                 </defs>
                 <rect x="50" y="10" width="700" height="230" fill="url(#scopeGridMinor)"/>
                 <rect x="50" y="10" width="700" height="230" fill="url(#scopeGrid)"/>
-
-                <!-- Scope border -->
                 <rect x="50" y="10" width="700" height="230" fill="none" stroke="#2a4a2a" stroke-width="2"/>
 
-                <!-- Horizontal reference lines -->
                 <line x1="50" y1="70" x2="750" y2="70" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
                 <line x1="50" y1="125" x2="750" y2="125" stroke="#2a4a2a" stroke-width="1"/>
                 <line x1="50" y1="165" x2="750" y2="165" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
                 <line x1="50" y1="200" x2="750" y2="200" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
-
-                <!-- Vertical center line (between 2 cycles) -->
                 <line x1="400" y1="10" x2="400" y2="240" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="3,3"/>
 
-                <!-- Y-axis labels -->
                 <text x="45" y="75" text-anchor="end" fill="#ffff00" font-size="10">CH1</text>
                 <text x="45" y="170" text-anchor="end" fill="#00ff00" font-size="10">CH2</text>
                 <text x="45" y="205" text-anchor="end" fill="#00bfff" font-size="10">CH3</text>
 
-                <!-- Time markers (2 cycles = 720°) -->
                 <text x="50" y="248" fill="#666" font-size="9">0°</text>
                 <text x="137" y="248" fill="#666" font-size="9">90°</text>
                 <text x="225" y="248" fill="#666" font-size="9">180°</text>
@@ -579,64 +613,68 @@
                 <text x="662" y="248" fill="#666" font-size="9">630°</text>
                 <text x="740" y="248" fill="#666" font-size="9">720°</text>
 
-                <!-- Cycle labels -->
                 <text x="225" y="22" fill="#444" font-size="10" text-anchor="middle">第一週期</text>
                 <text x="575" y="22" fill="#444" font-size="10" text-anchor="middle">第二週期</text>
 
-                <!-- Dead time markers -->
                 <g id="deadTimeMarkers"></g>
-
-                <!-- AC Sine wave (CH1 - Yellow) - 2 cycles -->
                 <path id="acWave" d="" fill="none" stroke="#ffff00" stroke-width="2"/>
-
-                <!-- Upper gate signal (CH2 - Green) - 2 cycles -->
                 <path id="upperGate" d="" fill="none" stroke="#00ff00" stroke-width="2"/>
-
-                <!-- Lower gate signal (CH3 - Blue) - 2 cycles -->
                 <path id="lowerGate" d="" fill="none" stroke="#00bfff" stroke-width="2"/>
-
-                <!-- Time indicator (red vertical line) -->
                 <line id="timeIndicator" x1="50" y1="10" x2="50" y2="240" stroke="#ff0000" stroke-width="2" opacity="0.8"/>
             </svg>
         </div>
 
         <!-- Analysis Section -->
         <div class="analysis-section">
-            <div class="analysis-title">體二極體分析 (Body Diode Analysis)</div>
+            <div class="analysis-title">背對背 MOSFET 體二極體分析 (Back-to-Back Configuration)</div>
             <div class="analysis-content">
-                <p><span class="highlight">此開關時序的目的：避免電流流經 MOSFET 的體二極體</span></p>
+                <div class="circuit-diagram-text">
+電路拓撲 (Source-Source 相接):
+
+  AC(L) ───┤D  Q1  S├───═══───┤S  Q2  D├─── LED ─── AC(N)
+                         │
+                    共同 Source 節點
+
+  Q1 體二極體: S → D (指向 AC 方向)
+  Q2 體二極體: S → D (指向 LED 方向)
+
+  ※ 兩個體二極體背對背，當兩 MOS 都 OFF 時可阻斷雙向電流
+                </div>
+
+                <p><span class="highlight">此配置的優勢：背對背體二極體可阻斷交流電</span></p>
 
                 <div class="timing-diagram">
-正半週 (L→N方向):
+正半週 (L→N，電流: AC → Q1(D→S) → Q2(S→D) → LED):
   過零點 → Q2先ON → [DT1] → Q1 ON → 導通 → Q1先OFF → [DT2] → Q2 OFF
 
-負半週 (N→L方向):
+負半週 (N→L，電流: LED → Q2(D→S) → Q1(S→D) → AC):
   過零點 → Q1先ON → [DT1] → Q2 ON → 導通 → Q2先OFF → [DT2] → Q1 OFF
                 </div>
 
-                <p><strong>原理說明：</strong></p>
-                <p>• <span class="highlight">正半週</span>：電流方向 L→Q1→Q2→LED→N</p>
-                <p style="margin-left: 15px;">- Q2 先導通：為電流路徑做準備（此時 Q1 關閉，電流無法流動）</p>
-                <p style="margin-left: 15px;">- Q1 後導通：兩者皆 ON，電流經由通道流過，<span class="highlight">不經過體二極體</span></p>
-                <p style="margin-left: 15px;">- Q1 先關閉：立即切斷電流（Q1 的體二極體方向相反，阻擋電流）</p>
+                <p><strong>為何此開關時序可避免體二極體導通？</strong></p>
 
-                <p>• <span class="highlight">負半週</span>：電流方向 N→LED→Q2→Q1→L</p>
-                <p style="margin-left: 15px;">- Q1 先導通：準備下游路徑</p>
-                <p style="margin-left: 15px;">- Q2 後導通：兩者皆 ON，電流經由通道流過</p>
-                <p style="margin-left: 15px;">- Q2 先關閉：切斷上游電流源</p>
+                <p>• <span class="highlight">正半週</span> (電流方向: L → Q1(D→S) → Q2(S→D) → LED → N):</p>
+                <p style="margin-left: 15px;" class="good">- Q2 體二極體方向 S→D 與電流方向相同，若 Q2 OFF 則體二極體會導通</p>
+                <p style="margin-left: 15px;" class="good">- 所以 <strong>Q2 先 ON</strong>，讓電流走通道而非體二極體</p>
+                <p style="margin-left: 15px;" class="good">- Q1 體二極體方向 S→D 與電流方向相反，<strong>自然阻斷</strong></p>
+                <p style="margin-left: 15px;" class="good">- 關閉時 <strong>Q1 先 OFF</strong>，電流立即被 Q1 體二極體阻斷 ✓</p>
 
-                <p><strong class="warning">注意事項：</strong></p>
-                <p class="warning">• 負半週時，若兩個 MOSFET 都關閉，體二極體可能會短暫導通（因為方向一致）</p>
-                <p class="warning">• Dead Time 應盡可能短，以減少體二極體導通時間和損耗</p>
-                <p class="warning">• 此設計在負半週的過零點附近，仍有短暫的體二極體導通風險</p>
+                <p>• <span class="highlight">負半週</span> (電流方向: N → LED → Q2(D→S) → Q1(S→D) → L):</p>
+                <p style="margin-left: 15px;" class="good">- Q1 體二極體方向 S→D 與電流方向相同，若 Q1 OFF 則體二極體會導通</p>
+                <p style="margin-left: 15px;" class="good">- 所以 <strong>Q1 先 ON</strong>，讓電流走通道而非體二極體</p>
+                <p style="margin-left: 15px;" class="good">- Q2 體二極體方向 S→D 與電流方向相反，<strong>自然阻斷</strong></p>
+                <p style="margin-left: 15px;" class="good">- 關閉時 <strong>Q2 先 OFF</strong>，電流立即被 Q2 體二極體阻斷 ✓</p>
 
-                <p><strong>結論：</strong>此開關時序 <span class="highlight">可以有效減少</span> 體二極體導通，但無法完全避免（特別是在負半週過零點）。建議配合適當的緩衝電路使用。</p>
+                <p><strong class="highlight">結論：此開關時序配合 S-S 背對背配置，可以完全避免體二極體導通！</strong></p>
+
+                <p class="warning">注意事項：</p>
+                <p class="warning">• Dead Time 仍需存在以確保開關安全轉換</p>
+                <p class="warning">• 建議 Dead Time 保持最小值以減少切換損耗</p>
             </div>
         </div>
     </div>
 
     <script>
-        // Configuration
         const config = {
             scopeWidth: 700,
             scopeStartX: 50,
@@ -646,19 +684,17 @@
             upperGateY: 165,
             lowerGateY: 200,
             gateAmplitude: 18,
-            totalDegrees: 720, // 2 cycles
-            animationSpeed: 6000 // ms for one full cycle (slower for clarity)
+            totalDegrees: 720,
+            animationSpeed: 6000
         };
 
-        // State
         let dimmingPercent = 50;
-        let deadTime1 = 5; // degrees
-        let deadTime2 = 5; // degrees
+        let deadTime1 = 5;
+        let deadTime2 = 5;
         let animationPhase = 0;
         let animationId = null;
         let lastTimestamp = 0;
 
-        // DOM Elements
         const dimmingSlider = document.getElementById('dimmingSlider');
         const dimmingValueDisplay = document.getElementById('dimmingValue');
         const deadTime1Slider = document.getElementById('deadTime1Slider');
@@ -684,19 +720,15 @@
         const ledRays = document.getElementById('ledRays');
         const ledGlowCircle = document.getElementById('ledGlowCircle');
 
-        // Calculate conduction angle from dimming percentage
         function getConductionAngle(percent) {
-            // Need enough room for DT1 + conduction + DT2
             const maxAngle = 180 - deadTime1 - deadTime2;
             return (percent / 100) * maxAngle + deadTime1;
         }
 
-        // Convert degrees to X position (for 2 cycles = 720°)
         function degreesToX(deg) {
             return config.scopeStartX + (deg / config.totalDegrees) * config.scopeWidth;
         }
 
-        // Generate AC sine wave path (2 cycles)
         function generateAcWave() {
             let path = `M ${config.scopeStartX} ${config.acCenterY}`;
             for (let x = 0; x <= config.scopeWidth; x++) {
@@ -708,9 +740,6 @@
             return path;
         }
 
-        // Generate gate signal paths with new timing sequence
-        // Positive half: Q2 ON first → DT1 → Q1 ON → conduction → Q1 OFF first → DT2 → Q2 OFF
-        // Negative half: Q1 ON first → DT1 → Q2 ON → conduction → Q2 OFF first → DT2 → Q1 OFF
         function generateGatePaths(conductionEndAngle) {
             const q1BaseY = config.upperGateY;
             const q2BaseY = config.lowerGateY;
@@ -719,22 +748,15 @@
             let q1Path = `M ${config.scopeStartX} ${q1BaseY}`;
             let q2Path = `M ${config.scopeStartX} ${q2BaseY}`;
 
-            // Generate for 2 cycles (0-720°)
             for (let cycle = 0; cycle < 2; cycle++) {
                 const offset = cycle * 360;
 
-                // ===== POSITIVE HALF CYCLE (0-180°) =====
-                // Q2 turns ON first at 0°
-                // Q1 turns ON after DT1
-                // Q1 turns OFF first at conductionEndAngle
-                // Q2 turns OFF after DT2
-
+                // Positive half: Q2 ON first, then Q1
                 const posQ2On = offset + 0;
                 const posQ1On = offset + deadTime1;
                 const posQ1Off = offset + conductionEndAngle;
                 const posQ2Off = offset + conductionEndAngle + deadTime2;
 
-                // Q1 path for positive half
                 q1Path += ` L ${degreesToX(posQ1On)} ${q1BaseY}`;
                 if (conductionEndAngle > deadTime1) {
                     q1Path += ` L ${degreesToX(posQ1On)} ${q1BaseY + highOffset}`;
@@ -743,7 +765,6 @@
                 }
                 q1Path += ` L ${degreesToX(offset + 180)} ${q1BaseY}`;
 
-                // Q2 path for positive half
                 q2Path += ` L ${degreesToX(posQ2On)} ${q2BaseY}`;
                 if (conductionEndAngle > deadTime1) {
                     q2Path += ` L ${degreesToX(posQ2On)} ${q2BaseY + highOffset}`;
@@ -752,18 +773,12 @@
                 }
                 q2Path += ` L ${degreesToX(offset + 180)} ${q2BaseY}`;
 
-                // ===== NEGATIVE HALF CYCLE (180-360°) =====
-                // Q1 turns ON first at 180°
-                // Q2 turns ON after DT1
-                // Q2 turns OFF first at 180 + conductionEndAngle
-                // Q1 turns OFF after DT2
-
+                // Negative half: Q1 ON first, then Q2
                 const negQ1On = offset + 180;
                 const negQ2On = offset + 180 + deadTime1;
                 const negQ2Off = offset + 180 + conductionEndAngle;
                 const negQ1Off = offset + 180 + conductionEndAngle + deadTime2;
 
-                // Q1 path for negative half
                 q1Path += ` L ${degreesToX(negQ1On)} ${q1BaseY}`;
                 if (conductionEndAngle > deadTime1) {
                     q1Path += ` L ${degreesToX(negQ1On)} ${q1BaseY + highOffset}`;
@@ -772,7 +787,6 @@
                 }
                 q1Path += ` L ${degreesToX(offset + 360)} ${q1BaseY}`;
 
-                // Q2 path for negative half
                 q2Path += ` L ${degreesToX(negQ2On)} ${q2BaseY}`;
                 if (conductionEndAngle > deadTime1) {
                     q2Path += ` L ${degreesToX(negQ2On)} ${q2BaseY + highOffset}`;
@@ -785,56 +799,43 @@
             return { q1Path, q2Path };
         }
 
-        // Update dead time markers on scope
         function updateDeadTimeMarkers(conductionEndAngle) {
             let markers = '';
-
             for (let cycle = 0; cycle < 2; cycle++) {
                 const offset = cycle * 360;
 
-                // DT1 markers (orange) - turn-on delay
-                // Positive half: from 0 to DT1
                 const posDT1Start = offset + 0;
                 const posDT1End = offset + deadTime1;
                 markers += `<rect x="${degreesToX(posDT1Start)}" y="10" width="${degreesToX(posDT1End) - degreesToX(posDT1Start)}" height="230" fill="#ff9900" opacity="0.15"/>`;
 
-                // Negative half: from 180 to 180+DT1
                 const negDT1Start = offset + 180;
                 const negDT1End = offset + 180 + deadTime1;
                 markers += `<rect x="${degreesToX(negDT1Start)}" y="10" width="${degreesToX(negDT1End) - degreesToX(negDT1Start)}" height="230" fill="#ff9900" opacity="0.15"/>`;
 
-                // DT2 markers (pink) - turn-off delay
                 if (conductionEndAngle > deadTime1) {
-                    // Positive half
                     const posDT2Start = offset + conductionEndAngle;
                     const posDT2End = Math.min(offset + conductionEndAngle + deadTime2, offset + 180);
                     markers += `<rect x="${degreesToX(posDT2Start)}" y="10" width="${degreesToX(posDT2End) - degreesToX(posDT2Start)}" height="230" fill="#ff66cc" opacity="0.15"/>`;
 
-                    // Negative half
                     const negDT2Start = offset + 180 + conductionEndAngle;
                     const negDT2End = Math.min(offset + 180 + conductionEndAngle + deadTime2, offset + 360);
                     markers += `<rect x="${degreesToX(negDT2Start)}" y="10" width="${degreesToX(negDT2End) - degreesToX(negDT2Start)}" height="230" fill="#ff66cc" opacity="0.15"/>`;
                 }
             }
-
             deadTimeMarkers.innerHTML = markers;
         }
 
-        // Update oscilloscope display
         function updateScope() {
             const conductionEndAngle = getConductionAngle(dimmingPercent);
-
             acWave.setAttribute('d', generateAcWave());
             const { q1Path, q2Path } = generateGatePaths(conductionEndAngle);
             upperGate.setAttribute('d', q1Path);
             lowerGate.setAttribute('d', q2Path);
             updateDeadTimeMarkers(conductionEndAngle);
-
             const actualConduction = conductionEndAngle - deadTime1;
             angleText.textContent = `導通角: ${actualConduction.toFixed(0)}° (${dimmingPercent}%)`;
         }
 
-        // Determine MOS states based on phase
         function getMosStates(phase) {
             const conductionEndAngle = getConductionAngle(dimmingPercent);
             const normalizedPhase = ((phase % 360) + 360) % 360;
@@ -847,50 +848,38 @@
             let phaseDesc = '';
 
             if (normalizedPhase < 180) {
-                // Positive half cycle
                 phaseDesc = '正半週';
-
                 if (normalizedPhase < deadTime1) {
-                    // DT1: Q2 is ON, Q1 is OFF
                     q2On = true;
                     inDT1 = true;
                     stateDesc = 'Q2 ON (等待 Q1)';
                 } else if (normalizedPhase < conductionEndAngle) {
-                    // Both ON - conducting
                     q1On = true;
                     q2On = true;
                     stateDesc = 'Q1+Q2 導通中';
                 } else if (normalizedPhase < conductionEndAngle + deadTime2 && normalizedPhase < 180) {
-                    // DT2: Q1 is OFF, Q2 is still ON
                     q2On = true;
                     inDT2 = true;
-                    stateDesc = 'Q2 ON (等待關閉)';
+                    stateDesc = 'Q2 ON (Q1已關)';
                 } else {
-                    // Both OFF
                     stateDesc = '關斷';
                 }
             } else {
-                // Negative half cycle
                 phaseDesc = '負半週';
                 const negPhase = normalizedPhase - 180;
-
                 if (negPhase < deadTime1) {
-                    // DT1: Q1 is ON, Q2 is OFF
                     q1On = true;
                     inDT1 = true;
                     stateDesc = 'Q1 ON (等待 Q2)';
                 } else if (negPhase < conductionEndAngle) {
-                    // Both ON - conducting
                     q1On = true;
                     q2On = true;
                     stateDesc = 'Q1+Q2 導通中';
                 } else if (negPhase < conductionEndAngle + deadTime2 && negPhase < 180) {
-                    // DT2: Q2 is OFF, Q1 is still ON
                     q1On = true;
                     inDT2 = true;
-                    stateDesc = 'Q1 ON (等待關閉)';
+                    stateDesc = 'Q1 ON (Q2已關)';
                 } else {
-                    // Both OFF
                     stateDesc = '關斷';
                 }
             }
@@ -898,26 +887,22 @@
             return { q1On, q2On, inDT1, inDT2, stateDesc, phaseDesc };
         }
 
-        // Update circuit state based on animation phase
         function updateCircuitState(phase) {
             const { q1On, q2On, inDT1, inDT2, stateDesc, phaseDesc } = getMosStates(phase);
             const bothOn = q1On && q2On;
             const normalizedPhase = ((phase % 360) + 360) % 360;
             const isPositiveHalf = normalizedPhase < 180;
 
-            // Update MOS visual state
             mosUpper.classList.toggle('mos-on', q1On);
             mosUpper.classList.toggle('mos-off', !q1On);
             mosLower.classList.toggle('mos-on', q2On);
             mosLower.classList.toggle('mos-off', !q2On);
 
-            // Update status indicators
             upperStatus.classList.toggle('on', q1On);
             lowerStatus.classList.toggle('on', q2On);
             dt1Status.style.opacity = inDT1 ? '1' : '0.3';
             dt2Status.style.opacity = inDT2 ? '1' : '0.3';
 
-            // Update current flow (only when both are ON)
             const showPositiveCurrent = bothOn && isPositiveHalf;
             const showNegativeCurrent = bothOn && !isPositiveHalf;
 
@@ -926,37 +911,30 @@
             currentNegative.classList.toggle('active', showNegativeCurrent);
             currentNegative.classList.toggle('flow-backward', showNegativeCurrent);
 
-            // Update LED glow
             ledRays.style.opacity = bothOn ? '1' : '0.3';
             ledGlowCircle.setAttribute('opacity', bothOn ? '0.3' : '0');
 
-            // Update phase text
             phaseText.textContent = phaseDesc;
             stateText.textContent = stateDesc;
 
-            // Update time indicator position
             const displayPhase = phase % config.totalDegrees;
             const indicatorX = config.scopeStartX + (displayPhase / config.totalDegrees) * config.scopeWidth;
             timeIndicator.setAttribute('x1', indicatorX);
             timeIndicator.setAttribute('x2', indicatorX);
         }
 
-        // Animation loop
         function animate(timestamp) {
             if (!lastTimestamp) lastTimestamp = timestamp;
             const delta = timestamp - lastTimestamp;
             lastTimestamp = timestamp;
 
-            // Update phase
             animationPhase += (delta / config.animationSpeed) * 360;
             animationPhase %= config.totalDegrees;
 
             updateCircuitState(animationPhase);
-
             animationId = requestAnimationFrame(animate);
         }
 
-        // Event listeners
         dimmingSlider.addEventListener('input', (e) => {
             dimmingPercent = parseInt(e.target.value);
             dimmingValueDisplay.textContent = dimmingPercent;
@@ -975,7 +953,6 @@
             updateScope();
         });
 
-        // Initialize
         function init() {
             updateScope();
             animationId = requestAnimationFrame(animate);
