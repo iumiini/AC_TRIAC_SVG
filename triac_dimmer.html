@@ -219,6 +219,43 @@
             margin-right: 5px;
         }
 
+        /* DT2 mode toggle */
+        .mode-toggle-group {
+            display: flex;
+            gap: 0;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #ff66cc;
+        }
+
+        .mode-btn {
+            padding: 6px 14px;
+            border: none;
+            background: #1a1a3e;
+            color: #ff66cc;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .mode-btn:hover {
+            background: #2a1a3e;
+        }
+
+        .mode-btn.active {
+            background: #ff66cc;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .mode-label {
+            color: #ff66cc;
+            font-size: 13px;
+            white-space: nowrap;
+            min-width: 180px;
+        }
+
         .value-display {
             background: #0f0f23;
             padding: 6px 12px;
@@ -647,6 +684,16 @@
                 <div class="value-display dt2"><span id="deadTime2Value">5</span>°</div>
             </div>
             <div class="control-row">
+                <span class="mode-label">DT2 模式:</span>
+                <div class="mode-toggle-group">
+                    <button class="mode-btn active" id="dt2ModeA">A: 固定延遲 OFF</button>
+                    <button class="mode-btn" id="dt2ModeB">B: ZCD 前 OFF</button>
+                </div>
+                <div id="dt2ModeDesc" style="color:#aaa; font-size:11px; margin-left:12px;">
+                    Q1 OFF → 等 DT2° → Q2 OFF
+                </div>
+            </div>
+            <div class="control-row">
                 <div class="playback-controls">
                     <span class="playback-label">速度:</span>
                     <div class="speed-btn-group">
@@ -849,7 +896,8 @@
         let lastTimestamp = 0;
 
         let isPaused = false;
-        let stepPoints = []; // 用於存儲步驟點位
+        let stepPoints = [];
+        let dt2Mode = 'A'; // 'A': 固定延遲, 'B': ZCD前OFF
 
         const dimmingSlider = document.getElementById('dimmingSlider');
         const dimmingValueDisplay = document.getElementById('dimmingValue');
@@ -857,6 +905,9 @@
         const deadTime1ValueDisplay = document.getElementById('deadTime1Value');
         const deadTime2Slider = document.getElementById('deadTime2Slider');
         const deadTime2ValueDisplay = document.getElementById('deadTime2Value');
+        const dt2ModeABtn = document.getElementById('dt2ModeA');
+        const dt2ModeBBtn = document.getElementById('dt2ModeB');
+        const dt2ModeDesc = document.getElementById('dt2ModeDesc');
         const speedBtns = document.querySelectorAll('.speed-btn');
         const playBtn = document.getElementById('playBtn');
         const pauseBtn = document.getElementById('pauseBtn');
@@ -917,10 +968,13 @@
                 const offset = cycle * 360;
 
                 // Positive half: Q2 ON first, then Q1
-                const posQ2On = offset + 0;
-                const posQ1On = offset + deadTime1;
+                const posQ1On  = offset + deadTime1;
                 const posQ1Off = offset + conductionEndAngle;
-                const posQ2Off = offset + conductionEndAngle + deadTime2;
+                // Mode A: Q2 OFF = conductionEndAngle + deadTime2
+                // Mode B: Q2 OFF = 180 - deadTime2 (before ZCD)
+                const posQ2Off = dt2Mode === 'A'
+                    ? offset + conductionEndAngle + deadTime2
+                    : offset + 180 - deadTime2;
 
                 q1Path += ` L ${degreesToX(posQ1On)} ${q1BaseY}`;
                 if (conductionEndAngle > deadTime1) {
@@ -930,19 +984,21 @@
                 }
                 q1Path += ` L ${degreesToX(offset + 180)} ${q1BaseY}`;
 
-                q2Path += ` L ${degreesToX(posQ2On)} ${q2BaseY}`;
+                q2Path += ` L ${degreesToX(offset + 0)} ${q2BaseY}`;
                 if (conductionEndAngle > deadTime1) {
-                    q2Path += ` L ${degreesToX(posQ2On)} ${q2BaseY + highOffset}`;
+                    q2Path += ` L ${degreesToX(offset + 0)} ${q2BaseY + highOffset}`;
                     q2Path += ` L ${degreesToX(Math.min(posQ2Off, offset + 180))} ${q2BaseY + highOffset}`;
                     q2Path += ` L ${degreesToX(Math.min(posQ2Off, offset + 180))} ${q2BaseY}`;
                 }
                 q2Path += ` L ${degreesToX(offset + 180)} ${q2BaseY}`;
 
                 // Negative half: Q1 ON first, then Q2
-                const negQ1On = offset + 180;
-                const negQ2On = offset + 180 + deadTime1;
+                const negQ1On  = offset + 180;
+                const negQ2On  = offset + 180 + deadTime1;
                 const negQ2Off = offset + 180 + conductionEndAngle;
-                const negQ1Off = offset + 180 + conductionEndAngle + deadTime2;
+                const negQ1Off = dt2Mode === 'A'
+                    ? offset + 180 + conductionEndAngle + deadTime2
+                    : offset + 360 - deadTime2;
 
                 q1Path += ` L ${degreesToX(negQ1On)} ${q1BaseY}`;
                 if (conductionEndAngle > deadTime1) {
@@ -981,15 +1037,35 @@
                 markers += `<rect x="${degreesToX(negDT1Start)}" y="150" width="${degreesToX(negDT1End) - degreesToX(negDT1Start)}" height="180" fill="#ff9900" opacity="0.12"/>`;
 
                 if (conductionEndAngle > deadTime1) {
+                    // DT2 區域: Q1 OFF → Q2 OFF (Mode A) 或 Q1 OFF → ZCD前DT2 (Mode B)
                     const posDT2Start = offset + conductionEndAngle;
-                    const posDT2End = Math.min(offset + conductionEndAngle + deadTime2, offset + 180);
-                    markers += `<rect x="${degreesToX(posDT2Start)}" y="10" width="${degreesToX(posDT2End) - degreesToX(posDT2Start)}" height="130" fill="#ff66cc" opacity="0.12"/>`;
-                    markers += `<rect x="${degreesToX(posDT2Start)}" y="150" width="${degreesToX(posDT2End) - degreesToX(posDT2Start)}" height="180" fill="#ff66cc" opacity="0.12"/>`;
+                    const posDT2End = dt2Mode === 'A'
+                        ? Math.min(offset + conductionEndAngle + deadTime2, offset + 180)
+                        : offset + 180 - deadTime2;
+                    if (posDT2End > posDT2Start) {
+                        markers += `<rect x="${degreesToX(posDT2Start)}" y="10" width="${degreesToX(posDT2End) - degreesToX(posDT2Start)}" height="130" fill="#ff66cc" opacity="0.12"/>`;
+                        markers += `<rect x="${degreesToX(posDT2Start)}" y="150" width="${degreesToX(posDT2End) - degreesToX(posDT2Start)}" height="180" fill="#ff66cc" opacity="0.12"/>`;
+                    }
+                    // Mode B: 額外標示 ZCD前DT2 的區域
+                    if (dt2Mode === 'B') {
+                        const posZcdGuardStart = offset + 180 - deadTime2;
+                        markers += `<rect x="${degreesToX(posZcdGuardStart)}" y="10" width="${degreesToX(offset + 180) - degreesToX(posZcdGuardStart)}" height="130" fill="#ff66cc" opacity="0.25"/>`;
+                        markers += `<rect x="${degreesToX(posZcdGuardStart)}" y="150" width="${degreesToX(offset + 180) - degreesToX(posZcdGuardStart)}" height="180" fill="#ff66cc" opacity="0.25"/>`;
+                    }
 
                     const negDT2Start = offset + 180 + conductionEndAngle;
-                    const negDT2End = Math.min(offset + 180 + conductionEndAngle + deadTime2, offset + 360);
-                    markers += `<rect x="${degreesToX(negDT2Start)}" y="10" width="${degreesToX(negDT2End) - degreesToX(negDT2Start)}" height="130" fill="#ff66cc" opacity="0.12"/>`;
-                    markers += `<rect x="${degreesToX(negDT2Start)}" y="150" width="${degreesToX(negDT2End) - degreesToX(negDT2Start)}" height="180" fill="#ff66cc" opacity="0.12"/>`;
+                    const negDT2End = dt2Mode === 'A'
+                        ? Math.min(offset + 180 + conductionEndAngle + deadTime2, offset + 360)
+                        : offset + 360 - deadTime2;
+                    if (negDT2End > negDT2Start) {
+                        markers += `<rect x="${degreesToX(negDT2Start)}" y="10" width="${degreesToX(negDT2End) - degreesToX(negDT2Start)}" height="130" fill="#ff66cc" opacity="0.12"/>`;
+                        markers += `<rect x="${degreesToX(negDT2Start)}" y="150" width="${degreesToX(negDT2End) - degreesToX(negDT2Start)}" height="180" fill="#ff66cc" opacity="0.12"/>`;
+                    }
+                    if (dt2Mode === 'B') {
+                        const negZcdGuardStart = offset + 360 - deadTime2;
+                        markers += `<rect x="${degreesToX(negZcdGuardStart)}" y="10" width="${degreesToX(offset + 360) - degreesToX(negZcdGuardStart)}" height="130" fill="#ff66cc" opacity="0.25"/>`;
+                        markers += `<rect x="${degreesToX(negZcdGuardStart)}" y="150" width="${degreesToX(offset + 360) - degreesToX(negZcdGuardStart)}" height="180" fill="#ff66cc" opacity="0.25"/>`;
+                    }
                 }
             }
             deadTimeMarkers.innerHTML = markers;
@@ -1072,9 +1148,20 @@
             angleText.textContent = `導通角: ${actualConduction.toFixed(0)}° (${dimmingPercent}%)`;
         }
 
+        // 計算 Mode B 第二個 MOS 的 OFF 時間點
+        // 正半週: Q2 OFF 在 (180 - deadTime2)
+        // 負半週: Q1 OFF 在 (180 - deadTime2) (相對負半週)
+        function getSecondMosOffAngle() {
+            if (dt2Mode === 'A') {
+                return null; // Mode A 用 conductionEndAngle + deadTime2
+            }
+            return 180 - deadTime2; // Mode B: ZCD 前 deadTime2°
+        }
+
         function getMosStates(phase) {
             const conductionEndAngle = getConductionAngle(dimmingPercent);
             const normalizedPhase = ((phase % 360) + 360) % 360;
+            const secondOffAngle = getSecondMosOffAngle();
 
             let q1On = false;
             let q2On = false;
@@ -1085,45 +1172,47 @@
 
             if (normalizedPhase < 180) {
                 phaseDesc = '正半週';
+                // Mode A: Q2 OFF at conductionEndAngle + deadTime2
+                // Mode B: Q2 OFF at (180 - deadTime2)
+                const posQ2Off = dt2Mode === 'A'
+                    ? conductionEndAngle + deadTime2
+                    : secondOffAngle;
+
                 if (normalizedPhase < deadTime1) {
-                    // 步驟1: Q2先ON，AC→Q1箭頭出現
                     q2On = true;
                     inDT1 = true;
                     stateDesc = '① Q2 ON + AC→Q1';
                 } else if (normalizedPhase < conductionEndAngle) {
-                    // 步驟2-3: Q1也ON，電流流向N箭頭出現
                     q1On = true;
                     q2On = true;
                     stateDesc = '③ 電流→N導通中';
-                } else if (normalizedPhase < conductionEndAngle + deadTime2 && normalizedPhase < 180) {
-                    // 步驟5-6: Q1 OFF，電流→N消失
+                } else if (normalizedPhase < Math.min(posQ2Off, 180)) {
                     q2On = true;
                     inDT2 = true;
-                    stateDesc = '⑤ Q1 OFF (→N消失)';
+                    stateDesc = dt2Mode === 'A' ? '⑤ Q1 OFF (→N消失)' : '⑤ Q1 OFF → 等ZCD';
                 } else {
-                    // 步驟7: Q2 OFF，AC→Q1消失
                     stateDesc = '⑦ 全部關斷';
                 }
             } else {
                 phaseDesc = '負半週';
                 const negPhase = normalizedPhase - 180;
+                const negQ1Off = dt2Mode === 'A'
+                    ? conductionEndAngle + deadTime2
+                    : secondOffAngle;
+
                 if (negPhase < deadTime1) {
-                    // 步驟1: Q1先ON，N→LED→Q2箭頭出現
                     q1On = true;
                     inDT1 = true;
                     stateDesc = '① Q1 ON + N→Q2';
                 } else if (negPhase < conductionEndAngle) {
-                    // 步驟2-3: Q2也ON，電流流向L箭頭出現
                     q1On = true;
                     q2On = true;
                     stateDesc = '③ 電流→L導通中';
-                } else if (negPhase < conductionEndAngle + deadTime2 && negPhase < 180) {
-                    // 步驟5-6: Q2 OFF，電流→L消失
+                } else if (negPhase < Math.min(negQ1Off, 180)) {
                     q1On = true;
                     inDT2 = true;
-                    stateDesc = '⑤ Q2 OFF (→L消失)';
+                    stateDesc = dt2Mode === 'A' ? '⑤ Q2 OFF (→L消失)' : '⑤ Q2 OFF → 等ZCD';
                 } else {
-                    // 步驟7: Q1 OFF，N→Q2消失
                     stateDesc = '⑦ 全部關斷';
                 }
             }
@@ -1202,27 +1291,31 @@
             animationId = requestAnimationFrame(animate);
         }
 
-        // 計算步驟點位 (每個週期的關鍵時刻)
-        // 加上小偏移量確保顯示轉換後的狀態
         function calculateStepPoints() {
             const conductionEndAngle = getConductionAngle(dimmingPercent);
-            const epsilon = 0.5; // 小偏移量，確保跨過邊界
+            const epsilon = 0.5;
             stepPoints = [];
 
             for (let cycle = 0; cycle < 2; cycle++) {
                 const offset = cycle * 360;
-                // 正半週 (Q2先ON → DT1 → Q1 ON → 導通 → Q1 OFF → DT2 → Q2 OFF)
-                stepPoints.push(offset + epsilon);                                      // Q2 剛ON
-                stepPoints.push(offset + deadTime1 + epsilon);                          // Q1 剛ON (DT1結束後)
-                stepPoints.push(offset + conductionEndAngle + epsilon);                 // Q1 剛OFF
-                stepPoints.push(offset + conductionEndAngle + deadTime2 + epsilon);     // Q2 剛OFF (DT2結束後)
-                // 負半週 (Q1先ON → DT1 → Q2 ON → 導通 → Q2 OFF → DT2 → Q1 OFF)
-                stepPoints.push(offset + 180 + epsilon);                                // Q1 剛ON
-                stepPoints.push(offset + 180 + deadTime1 + epsilon);                    // Q2 剛ON (DT1結束後)
-                stepPoints.push(offset + 180 + conductionEndAngle + epsilon);           // Q2 剛OFF
-                stepPoints.push(offset + 180 + conductionEndAngle + deadTime2 + epsilon); // Q1 剛OFF (DT2結束後)
+                // 正半週 Q2 OFF 時間點
+                const posQ2Off = dt2Mode === 'A'
+                    ? offset + conductionEndAngle + deadTime2
+                    : offset + 180 - deadTime2;
+                // 負半週 Q1 OFF 時間點
+                const negQ1Off = dt2Mode === 'A'
+                    ? offset + 180 + conductionEndAngle + deadTime2
+                    : offset + 360 - deadTime2;
+
+                stepPoints.push(offset + epsilon);                               // Q2 剛ON
+                stepPoints.push(offset + deadTime1 + epsilon);                   // Q1 剛ON
+                stepPoints.push(offset + conductionEndAngle + epsilon);          // Q1 剛OFF
+                stepPoints.push(Math.min(posQ2Off, offset + 180) + epsilon);     // Q2 剛OFF
+                stepPoints.push(offset + 180 + epsilon);                         // Q1 剛ON
+                stepPoints.push(offset + 180 + deadTime1 + epsilon);             // Q2 剛ON
+                stepPoints.push(offset + 180 + conductionEndAngle + epsilon);    // Q2 剛OFF
+                stepPoints.push(Math.min(negQ1Off, offset + 360) + epsilon);     // Q1 剛OFF
             }
-            // 排序並去重
             stepPoints = [...new Set(stepPoints)].sort((a, b) => a - b);
         }
 
@@ -1284,6 +1377,21 @@
             updateScope();
             calculateStepPoints();
         });
+
+        // DT2 模式切換
+        function setDT2Mode(mode) {
+            dt2Mode = mode;
+            dt2ModeABtn.classList.toggle('active', mode === 'A');
+            dt2ModeBBtn.classList.toggle('active', mode === 'B');
+            dt2ModeDesc.textContent = mode === 'A'
+                ? 'Q1 OFF → 等 DT2° → Q2 OFF'
+                : 'Q1 OFF → Q2 維持ON → ZCD前 DT2° 才OFF';
+            updateScope();
+            calculateStepPoints();
+        }
+
+        dt2ModeABtn.addEventListener('click', () => setDT2Mode('A'));
+        dt2ModeBBtn.addEventListener('click', () => setDT2Mode('B'));
 
         // 速度按鈕
         speedBtns.forEach(btn => {
