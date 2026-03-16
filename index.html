@@ -284,6 +284,8 @@
         .ch1 .channel-dot { background: #ffff00; }
         .ch2 .channel-dot { background: #00ff00; }
         .ch3 .channel-dot { background: #00bfff; }
+        .ch4 .channel-dot { background: #ff6644; }
+        .ch5 .channel-dot { background: #aaff44; }
 
         /* Status indicators */
         .status-panel {
@@ -687,10 +689,12 @@
                     <div class="channel ch1"><div class="channel-dot"></div>CH1: AC</div>
                     <div class="channel ch2"><div class="channel-dot"></div>CH2: Q1 Gate</div>
                     <div class="channel ch3"><div class="channel-dot"></div>CH3: Q2 Gate</div>
+                    <div class="channel ch4"><div class="channel-dot"></div>CH4: ZCD</div>
+                    <div class="channel ch5"><div class="channel-dot"></div>CH5: 負載導通</div>
                 </div>
             </div>
-            <svg id="scopeSvg" viewBox="0 0 800 250" width="100%" height="250">
-                <rect width="800" height="250" fill="#0a0a0a"/>
+            <svg id="scopeSvg" viewBox="0 0 800 340" width="100%" height="340">
+                <rect width="800" height="340" fill="#0a0a0a"/>
                 <defs>
                     <pattern id="scopeGrid" width="43.75" height="50" patternUnits="userSpaceOnUse">
                         <path d="M 43.75 0 L 0 0 0 50" fill="none" stroke="#1a3a1a" stroke-width="0.5"/>
@@ -699,29 +703,38 @@
                         <path d="M 8.75 0 L 0 0 0 10" fill="none" stroke="#0d1f0d" stroke-width="0.3"/>
                     </pattern>
                 </defs>
-                <rect x="50" y="10" width="700" height="230" fill="url(#scopeGridMinor)"/>
-                <rect x="50" y="10" width="700" height="230" fill="url(#scopeGrid)"/>
-                <rect x="50" y="10" width="700" height="230" fill="none" stroke="#2a4a2a" stroke-width="2"/>
+                <rect x="50" y="10" width="700" height="320" fill="url(#scopeGridMinor)"/>
+                <rect x="50" y="10" width="700" height="320" fill="url(#scopeGrid)"/>
+                <rect x="50" y="10" width="700" height="320" fill="none" stroke="#2a4a2a" stroke-width="2"/>
 
-                <line x1="50" y1="70" x2="750" y2="70" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
-                <line x1="50" y1="125" x2="750" y2="125" stroke="#2a4a2a" stroke-width="1"/>
-                <line x1="50" y1="165" x2="750" y2="165" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
-                <line x1="50" y1="200" x2="750" y2="200" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
-                <line x1="400" y1="10" x2="400" y2="240" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="3,3"/>
+                <!-- CH1 AC 參考線 -->
+                <line x1="50" y1="65" x2="750" y2="65" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
+                <!-- CH2 Q1 Gate 參考線 -->
+                <line x1="50" y1="155" x2="750" y2="155" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
+                <!-- CH3 Q2 Gate 參考線 -->
+                <line x1="50" y1="190" x2="750" y2="190" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
+                <!-- CH4 ZCD 參考線 -->
+                <line x1="50" y1="232" x2="750" y2="232" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
+                <!-- CH5 Combined 參考線 -->
+                <line x1="50" y1="278" x2="750" y2="278" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
+                <!-- 垂直中心分隔線 -->
+                <line x1="400" y1="10" x2="400" y2="330" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="3,3"/>
 
-                <text x="45" y="75" text-anchor="end" fill="#ffff00" font-size="10">CH1</text>
-                <text x="45" y="170" text-anchor="end" fill="#00ff00" font-size="10">CH2</text>
-                <text x="45" y="205" text-anchor="end" fill="#00bfff" font-size="10">CH3</text>
+                <text x="45" y="70" text-anchor="end" fill="#ffff00" font-size="10">CH1</text>
+                <text x="45" y="160" text-anchor="end" fill="#00ff00" font-size="10">CH2</text>
+                <text x="45" y="195" text-anchor="end" fill="#00bfff" font-size="10">CH3</text>
+                <text x="45" y="237" text-anchor="end" fill="#ff6644" font-size="10">CH4</text>
+                <text x="45" y="283" text-anchor="end" fill="#aaff44" font-size="10">CH5</text>
 
-                <text x="50" y="248" fill="#666" font-size="9">0°</text>
-                <text x="137" y="248" fill="#666" font-size="9">90°</text>
-                <text x="225" y="248" fill="#666" font-size="9">180°</text>
-                <text x="312" y="248" fill="#666" font-size="9">270°</text>
-                <text x="393" y="248" fill="#666" font-size="9">360°</text>
-                <text x="487" y="248" fill="#666" font-size="9">450°</text>
-                <text x="575" y="248" fill="#666" font-size="9">540°</text>
-                <text x="662" y="248" fill="#666" font-size="9">630°</text>
-                <text x="740" y="248" fill="#666" font-size="9">720°</text>
+                <text x="50" y="338" fill="#666" font-size="9">0°</text>
+                <text x="137" y="338" fill="#666" font-size="9">90°</text>
+                <text x="225" y="338" fill="#666" font-size="9">180°</text>
+                <text x="312" y="338" fill="#666" font-size="9">270°</text>
+                <text x="393" y="338" fill="#666" font-size="9">360°</text>
+                <text x="487" y="338" fill="#666" font-size="9">450°</text>
+                <text x="575" y="338" fill="#666" font-size="9">540°</text>
+                <text x="662" y="338" fill="#666" font-size="9">630°</text>
+                <text x="740" y="338" fill="#666" font-size="9">720°</text>
 
                 <text x="225" y="22" fill="#444" font-size="10" text-anchor="middle">第一週期</text>
                 <text x="575" y="22" fill="#444" font-size="10" text-anchor="middle">第二週期</text>
@@ -730,7 +743,9 @@
                 <path id="acWave" d="" fill="none" stroke="#ffff00" stroke-width="2"/>
                 <path id="upperGate" d="" fill="none" stroke="#00ff00" stroke-width="2"/>
                 <path id="lowerGate" d="" fill="none" stroke="#00bfff" stroke-width="2"/>
-                <line id="timeIndicator" x1="50" y1="10" x2="50" y2="240" stroke="#ff0000" stroke-width="2" opacity="0.8"/>
+                <path id="zcdWave" d="" fill="none" stroke="#ff6644" stroke-width="2"/>
+                <path id="combinedGate" d="" fill="none" stroke="#aaff44" stroke-width="2"/>
+                <line id="timeIndicator" x1="50" y1="10" x2="50" y2="330" stroke="#ff0000" stroke-width="2" opacity="0.8"/>
             </svg>
         </div>
 
@@ -789,11 +804,16 @@
             scopeWidth: 700,
             scopeStartX: 50,
             scopeEndX: 750,
-            acCenterY: 70,
-            acAmplitude: 40,
-            upperGateY: 165,
-            lowerGateY: 200,
+            acCenterY: 65,
+            acAmplitude: 38,
+            upperGateY: 155,
+            lowerGateY: 190,
             gateAmplitude: 18,
+            zcdBaseY: 232,
+            zcdAmplitude: 18,
+            zcdPulseWidth: 8,   // 過零點脈衝寬度（度）
+            combinedBaseY: 278,
+            combinedAmplitude: 18,
             totalDegrees: 720,
             animationSpeed: 8000
         };
@@ -837,6 +857,8 @@
         const upperGate = document.getElementById('upperGate');
         const lowerGate = document.getElementById('lowerGate');
         const deadTimeMarkers = document.getElementById('deadTimeMarkers');
+        const zcdWave = document.getElementById('zcdWave');
+        const combinedGate = document.getElementById('combinedGate');
         const ledRays = document.getElementById('ledRays');
         const ledGlowCircle = document.getElementById('ledGlowCircle');
 
@@ -926,23 +948,87 @@
 
                 const posDT1Start = offset + 0;
                 const posDT1End = offset + deadTime1;
-                markers += `<rect x="${degreesToX(posDT1Start)}" y="10" width="${degreesToX(posDT1End) - degreesToX(posDT1Start)}" height="230" fill="#ff9900" opacity="0.15"/>`;
+                markers += `<rect x="${degreesToX(posDT1Start)}" y="10" width="${degreesToX(posDT1End) - degreesToX(posDT1Start)}" height="320" fill="#ff9900" opacity="0.15"/>`;
 
                 const negDT1Start = offset + 180;
                 const negDT1End = offset + 180 + deadTime1;
-                markers += `<rect x="${degreesToX(negDT1Start)}" y="10" width="${degreesToX(negDT1End) - degreesToX(negDT1Start)}" height="230" fill="#ff9900" opacity="0.15"/>`;
+                markers += `<rect x="${degreesToX(negDT1Start)}" y="10" width="${degreesToX(negDT1End) - degreesToX(negDT1Start)}" height="320" fill="#ff9900" opacity="0.15"/>`;
 
                 if (conductionEndAngle > deadTime1) {
                     const posDT2Start = offset + conductionEndAngle;
                     const posDT2End = Math.min(offset + conductionEndAngle + deadTime2, offset + 180);
-                    markers += `<rect x="${degreesToX(posDT2Start)}" y="10" width="${degreesToX(posDT2End) - degreesToX(posDT2Start)}" height="230" fill="#ff66cc" opacity="0.15"/>`;
+                    markers += `<rect x="${degreesToX(posDT2Start)}" y="10" width="${degreesToX(posDT2End) - degreesToX(posDT2Start)}" height="320" fill="#ff66cc" opacity="0.15"/>`;
 
                     const negDT2Start = offset + 180 + conductionEndAngle;
                     const negDT2End = Math.min(offset + 180 + conductionEndAngle + deadTime2, offset + 360);
-                    markers += `<rect x="${degreesToX(negDT2Start)}" y="10" width="${degreesToX(negDT2End) - degreesToX(negDT2Start)}" height="230" fill="#ff66cc" opacity="0.15"/>`;
+                    markers += `<rect x="${degreesToX(negDT2Start)}" y="10" width="${degreesToX(negDT2End) - degreesToX(negDT2Start)}" height="320" fill="#ff66cc" opacity="0.15"/>`;
                 }
             }
             deadTimeMarkers.innerHTML = markers;
+        }
+
+        // CH4: ZCD 波形 - 在每個過零點(0°,180°,360°,540°) 產生短方波
+        function generateZCDPath() {
+            const baseY = config.zcdBaseY;
+            const high = baseY - config.zcdAmplitude;
+            const pw = config.zcdPulseWidth; // 脈衝寬度（度）
+            let path = `M ${config.scopeStartX} ${baseY}`;
+
+            const zeroCrossings = [0, 180, 360, 540]; // 2個週期的過零點
+            let prevEnd = 0;
+
+            for (const zc of zeroCrossings) {
+                // 過零點前的低電位段
+                if (zc > prevEnd) {
+                    path += ` L ${degreesToX(zc)} ${baseY}`;
+                }
+                // 方波上升
+                path += ` L ${degreesToX(zc)} ${high}`;
+                // 保持高電位（脈衝寬度）
+                path += ` L ${degreesToX(zc + pw)} ${high}`;
+                // 方波下降
+                path += ` L ${degreesToX(zc + pw)} ${baseY}`;
+                prevEnd = zc + pw;
+            }
+            // 剩餘低電位段
+            path += ` L ${config.scopeEndX} ${baseY}`;
+            return path;
+        }
+
+        // CH5: 兩 MOS 都 ON 的合併導通信號
+        function generateCombinedPath(conductionEndAngle) {
+            const baseY = config.combinedBaseY;
+            const high = baseY - config.combinedAmplitude;
+            let path = `M ${config.scopeStartX} ${baseY}`;
+
+            for (let cycle = 0; cycle < 2; cycle++) {
+                const offset = cycle * 360;
+
+                // 正半週：Q1+Q2 都ON的區間 = deadTime1 ~ conductionEndAngle
+                const posOn = offset + deadTime1;
+                const posOff = offset + conductionEndAngle;
+
+                path += ` L ${degreesToX(posOn)} ${baseY}`;
+                if (conductionEndAngle > deadTime1) {
+                    path += ` L ${degreesToX(posOn)} ${high}`;
+                    path += ` L ${degreesToX(posOff)} ${high}`;
+                    path += ` L ${degreesToX(posOff)} ${baseY}`;
+                }
+
+                // 負半週：Q1+Q2 都ON的區間 = 180+deadTime1 ~ 180+conductionEndAngle
+                const negOn = offset + 180 + deadTime1;
+                const negOff = offset + 180 + conductionEndAngle;
+
+                path += ` L ${degreesToX(negOn)} ${baseY}`;
+                if (conductionEndAngle > deadTime1) {
+                    path += ` L ${degreesToX(negOn)} ${high}`;
+                    path += ` L ${degreesToX(negOff)} ${high}`;
+                    path += ` L ${degreesToX(negOff)} ${baseY}`;
+                }
+
+                path += ` L ${degreesToX(offset + 360)} ${baseY}`;
+            }
+            return path;
         }
 
         function updateScope() {
@@ -951,6 +1037,8 @@
             const { q1Path, q2Path } = generateGatePaths(conductionEndAngle);
             upperGate.setAttribute('d', q1Path);
             lowerGate.setAttribute('d', q2Path);
+            zcdWave.setAttribute('d', generateZCDPath());
+            combinedGate.setAttribute('d', generateCombinedPath(conductionEndAngle));
             updateDeadTimeMarkers(conductionEndAngle);
             const actualConduction = conductionEndAngle - deadTime1;
             angleText.textContent = `導通角: ${actualConduction.toFixed(0)}° (${dimmingPercent}%)`;
