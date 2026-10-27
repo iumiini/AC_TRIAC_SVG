@@ -323,6 +323,101 @@
         .ch3 .channel-dot { background: #00ff00; }
         .ch4 .channel-dot { background: #00bfff; }
         .ch5 .channel-dot { background: #aaff44; }
+        .ch6 .channel-dot { background: #00ff00; border: 2px solid #fff; box-sizing: border-box; }
+        .ch7 .channel-dot { background: #00bfff; border: 2px solid #fff; box-sizing: border-box; }
+        .ch-diode .channel-dot { background: #ff3333; border-radius: 2px; }
+
+        /* Scope view controls */
+        .scope-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .scope-btn {
+            padding: 4px 10px;
+            border: 1px solid #3a5a3a;
+            border-radius: 4px;
+            background: #0f1f0f;
+            color: #8fdf8f;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .scope-btn:hover {
+            background: #1a3a1a;
+        }
+
+        #scopeSvg {
+            cursor: crosshair;
+            touch-action: pan-y;
+            user-select: none;
+        }
+
+        #scopeSvg.dragging {
+            cursor: grabbing;
+        }
+
+        /* Cursor readout */
+        .cursor-readout {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 4px 12px;
+            margin-top: 8px;
+            padding: 8px 10px;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .ro-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .ro-label {
+            color: #888;
+        }
+
+        .ro-hint {
+            grid-column: 1 / -1;
+            color: #666;
+            font-size: 11px;
+        }
+
+        /* Non-ideal gate controls */
+        .nonideal-panel {
+            border-top: 1px dashed #444;
+            padding-top: 12px;
+            margin-top: 4px;
+        }
+
+        .nonideal-panel.hidden {
+            display: none;
+        }
+
+        .slider-label.highlight-gate {
+            color: #66ddff;
+        }
+
+        .value-display.gate {
+            color: #66ddff;
+            min-width: 110px;
+        }
+
+        .diode-warning {
+            color: #ff3333;
+            font-weight: bold;
+        }
 
         /* Status indicators */
         .status-panel {
@@ -674,14 +769,14 @@
                     <span class="slider-label highlight-dt1">Dead Time 1 (開啟延遲)</span>
                     <input type="range" id="deadTime1Slider" min="1" max="20" value="5">
                 </div>
-                <div class="value-display dt1"><span id="deadTime1Value">5</span>°</div>
+                <div class="value-display dt1"><span id="deadTime1Value">5</span>° <small id="deadTime1Us"></small></div>
             </div>
             <div class="control-row">
                 <div class="slider-container">
                     <span class="slider-label highlight-dt2">Dead Time 2 (關閉延遲)</span>
                     <input type="range" id="deadTime2Slider" min="1" max="20" value="5">
                 </div>
-                <div class="value-display dt2"><span id="deadTime2Value">5</span>°</div>
+                <div class="value-display dt2"><span id="deadTime2Value">5</span>° <small id="deadTime2Us"></small></div>
             </div>
             <div class="control-row">
                 <span class="mode-label">DT2 模式:</span>
@@ -691,6 +786,45 @@
                 </div>
                 <div id="dt2ModeDesc" style="color:#aaa; font-size:11px; margin-left:12px;">
                     Q1 OFF → 等 DT2° → Q2 OFF
+                </div>
+            </div>
+            <div class="control-row">
+                <span class="mode-label" style="color:#66ddff;">市電頻率:</span>
+                <div class="mode-toggle-group" style="border-color:#66ddff;">
+                    <button class="mode-btn freq-btn" data-freq="50">50 Hz</button>
+                    <button class="mode-btn freq-btn active" data-freq="60">60 Hz</button>
+                </div>
+                <span class="mode-label" style="color:#66ddff; min-width:auto; margin-left:12px;">Gate 模型:</span>
+                <div class="mode-toggle-group" style="border-color:#66ddff;">
+                    <button class="mode-btn gate-mode-btn active" id="gateIdealBtn">理想</button>
+                    <button class="mode-btn gate-mode-btn" id="gateNonIdealBtn">非理想</button>
+                </div>
+            </div>
+            <div class="nonideal-panel hidden" id="nonIdealPanel">
+                <div class="control-row">
+                    <div class="slider-container">
+                        <span class="slider-label highlight-gate">Vgs 上升時間 tr</span>
+                        <input type="range" id="riseSlider" min="1" max="1000" value="20">
+                    </div>
+                    <div class="value-display gate"><span id="riseValue">20</span> µs</div>
+                </div>
+                <div class="control-row">
+                    <div class="slider-container">
+                        <span class="slider-label highlight-gate">Vgs 下降時間 tf</span>
+                        <input type="range" id="fallSlider" min="1" max="1000" value="100">
+                    </div>
+                    <div class="value-display gate"><span id="fallValue">100</span> µs</div>
+                </div>
+                <div class="control-row">
+                    <div class="slider-container">
+                        <span class="slider-label highlight-gate">Miller 平台長度 (×tr/tf @峰值)</span>
+                        <input type="range" id="millerSlider" min="0" max="200" value="50">
+                    </div>
+                    <div class="value-display gate"><span id="millerValue">50</span> %</div>
+                </div>
+                <div style="color:#888; font-size:11px; line-height:1.6;">
+                    tr / tf = Vgs 在 0 ↔ 12V 全擺幅的斜坡時間（不含平台）。Vth = 3V，Miller 平台 = 5V。<br>
+                    只有「負責阻斷電壓」的 MOS（正半週 Q1、負半週 Q2）會出現 Miller 平台，平台長度 ∝ 當下 |Vac|；另一顆屬 ZVS，無平台。
                 </div>
             </div>
             <div class="control-row">
@@ -726,22 +860,37 @@
             <div class="status-item" style="color: #ff66cc;">
                 <span id="dt2Status" style="opacity: 0.3;">● DT2</span>
             </div>
+            <div class="status-item">
+                <span id="diodeSummary" style="color:#00ff88;">體二極體導通: 無</span>
+            </div>
         </div>
 
         <!-- Oscilloscope Section -->
         <div class="scope-section">
             <div class="scope-header">
-                <div class="scope-title">▶ OSCILLOSCOPE - 示波器 (2個週期)</div>
+                <div class="scope-title">▶ OSCILLOSCOPE - 示波器</div>
                 <div class="channel-legend">
-                    <div class="channel ch1"><div class="channel-dot"></div>CH1: AC</div>
-                    <div class="channel ch2"><div class="channel-dot"></div>CH2: ZCD</div>
-                    <div class="channel ch3"><div class="channel-dot"></div>CH3: Q1 Gate</div>
-                    <div class="channel ch4"><div class="channel-dot"></div>CH4: Q2 Gate</div>
-                    <div class="channel ch5"><div class="channel-dot"></div>CH5: 負載導通</div>
+                    <div class="channel ch1"><div class="channel-dot"></div>AC</div>
+                    <div class="channel ch2"><div class="channel-dot"></div>ZCD</div>
+                    <div class="channel ch3"><div class="channel-dot"></div>Q1 Vgs</div>
+                    <div class="channel ch4"><div class="channel-dot"></div>Q2 Vgs</div>
+                    <div class="channel ch5"><div class="channel-dot"></div>負載導通</div>
+                    <div class="channel ch6"><div class="channel-dot"></div>Q1 Vds</div>
+                    <div class="channel ch7"><div class="channel-dot"></div>Q2 Vds</div>
+                    <div class="channel ch-diode"><div class="channel-dot"></div>體二極體導通</div>
                 </div>
             </div>
-            <svg id="scopeSvg" viewBox="0 0 800 355" width="100%" height="355">
-                <rect width="800" height="355" fill="#0a0a0a"/>
+            <div class="scope-toolbar">
+                <span>時間軸:</span>
+                <button class="scope-btn" id="viewResetBtn">全圖 (2週期)</button>
+                <button class="scope-btn" id="viewZoomInBtn">放大 +</button>
+                <button class="scope-btn" id="viewZoomOutBtn">縮小 −</button>
+                <button class="scope-btn" id="viewTurnOnBtn">聚焦開通邊緣</button>
+                <button class="scope-btn" id="viewTurnOffBtn">聚焦關斷邊緣</button>
+                <span id="viewInfo"></span>
+            </div>
+            <svg id="scopeSvg" viewBox="0 0 800 535" width="100%" height="535">
+                <rect width="800" height="535" fill="#0a0a0a"/>
                 <defs>
                     <pattern id="scopeGrid" width="43.75" height="50" patternUnits="userSpaceOnUse">
                         <path d="M 43.75 0 L 0 0 0 50" fill="none" stroke="#1a3a1a" stroke-width="0.5"/>
@@ -749,71 +898,74 @@
                     <pattern id="scopeGridMinor" width="8.75" height="10" patternUnits="userSpaceOnUse">
                         <path d="M 8.75 0 L 0 0 0 10" fill="none" stroke="#0d1f0d" stroke-width="0.3"/>
                     </pattern>
+                    <clipPath id="plotClip">
+                        <rect x="50" y="0" width="700" height="505"/>
+                    </clipPath>
                 </defs>
 
-                <!-- ===== 框1: CH1 AC + CH2 ZCD ===== -->
+                <!-- ===== 框1: AC + ZCD ===== -->
                 <rect x="50" y="10" width="700" height="130" fill="url(#scopeGridMinor)"/>
                 <rect x="50" y="10" width="700" height="130" fill="url(#scopeGrid)"/>
                 <rect x="50" y="10" width="700" height="130" fill="none" stroke="#3a5a3a" stroke-width="2"/>
                 <text x="55" y="22" fill="#3a7a3a" font-size="8">AC + ZCD</text>
-
-                <!-- CH1 AC 中心線 -->
                 <line x1="50" y1="55" x2="750" y2="55" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
-                <!-- CH1/CH2 分隔線 -->
                 <line x1="50" y1="100" x2="750" y2="100" stroke="#2a3a2a" stroke-width="1"/>
-                <!-- CH2 ZCD 基準線 -->
                 <line x1="50" y1="125" x2="750" y2="125" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
-                <!-- 框1 垂直中心線 -->
-                <line x1="400" y1="10" x2="400" y2="140" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="3,3"/>
+                <text x="45" y="60" text-anchor="end" fill="#ffff00" font-size="10">AC</text>
+                <text x="45" y="130" text-anchor="end" fill="#ff6644" font-size="10">ZCD</text>
 
-                <text x="45" y="60" text-anchor="end" fill="#ffff00" font-size="10">CH1</text>
-                <text x="45" y="130" text-anchor="end" fill="#ff6644" font-size="10">CH2</text>
-
-                <!-- ===== 框2: CH3 Q1 + CH4 Q2 + CH5 Combined ===== -->
+                <!-- ===== 框2: Q1 Vgs + Q2 Vgs + 負載導通 ===== -->
                 <rect x="50" y="150" width="700" height="180" fill="url(#scopeGridMinor)"/>
                 <rect x="50" y="150" width="700" height="180" fill="url(#scopeGrid)"/>
                 <rect x="50" y="150" width="700" height="180" fill="none" stroke="#3a5a3a" stroke-width="2"/>
-                <text x="55" y="162" fill="#3a7a3a" font-size="8">Gate Signals</text>
+                <text x="55" y="162" fill="#3a7a3a" font-size="8">Gate (0~12V)</text>
+                <line x1="50" y1="205" x2="750" y2="205" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
+                <line x1="50" y1="212" x2="750" y2="212" stroke="#2a3a2a" stroke-width="1"/>
+                <line x1="50" y1="265" x2="750" y2="265" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
+                <line x1="50" y1="272" x2="750" y2="272" stroke="#2a3a2a" stroke-width="1"/>
+                <line x1="50" y1="322" x2="750" y2="322" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
+                <!-- Vth / Miller 平台參考線 (非理想模式顯示) -->
+                <g id="gateRefLines" opacity="0">
+                    <line id="q1VthLine" x1="50" x2="750" stroke="#666" stroke-width="0.8" stroke-dasharray="2,3"/>
+                    <line id="q2VthLine" x1="50" x2="750" stroke="#666" stroke-width="0.8" stroke-dasharray="2,3"/>
+                    <text id="q1VthText" x="748" text-anchor="end" fill="#777" font-size="7">Vth</text>
+                    <text id="q2VthText" x="748" text-anchor="end" fill="#777" font-size="7">Vth</text>
+                </g>
+                <text x="45" y="200" text-anchor="end" fill="#00ff00" font-size="10">Q1 Vgs</text>
+                <text x="45" y="260" text-anchor="end" fill="#00bfff" font-size="10">Q2 Vgs</text>
+                <text x="45" y="317" text-anchor="end" fill="#aaff44" font-size="10">負載導通</text>
 
-                <!-- CH3 Q1 基準線 -->
-                <line x1="50" y1="185" x2="750" y2="185" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
-                <!-- CH3/CH4 分隔線 -->
-                <line x1="50" y1="210" x2="750" y2="210" stroke="#2a3a2a" stroke-width="1"/>
-                <!-- CH4 Q2 基準線 -->
-                <line x1="50" y1="225" x2="750" y2="225" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
-                <!-- CH4/CH5 分隔線 -->
-                <line x1="50" y1="255" x2="750" y2="255" stroke="#2a3a2a" stroke-width="1"/>
-                <!-- CH5 Combined 基準線 -->
-                <line x1="50" y1="295" x2="750" y2="295" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
-                <!-- 框2 垂直中心線 -->
-                <line x1="400" y1="150" x2="400" y2="330" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="3,3"/>
+                <!-- ===== 框3: Q1 Vds + Q2 Vds ===== -->
+                <rect x="50" y="340" width="700" height="160" fill="url(#scopeGridMinor)"/>
+                <rect x="50" y="340" width="700" height="160" fill="url(#scopeGrid)"/>
+                <rect x="50" y="340" width="700" height="160" fill="none" stroke="#3a5a3a" stroke-width="2"/>
+                <text x="55" y="352" fill="#3a7a3a" font-size="8">Vds (0~156V)</text>
+                <line x1="50" y1="415" x2="750" y2="415" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
+                <line x1="50" y1="420" x2="750" y2="420" stroke="#2a3a2a" stroke-width="1"/>
+                <line x1="50" y1="492" x2="750" y2="492" stroke="#2a4a2a" stroke-width="1" stroke-dasharray="5,5"/>
+                <text x="45" y="410" text-anchor="end" fill="#00ff00" font-size="10">Q1 Vds</text>
+                <text x="45" y="487" text-anchor="end" fill="#00bfff" font-size="10">Q2 Vds</text>
 
-                <text x="45" y="190" text-anchor="end" fill="#00ff00" font-size="10">CH3</text>
-                <text x="45" y="230" text-anchor="end" fill="#00bfff" font-size="10">CH4</text>
-                <text x="45" y="300" text-anchor="end" fill="#aaff44" font-size="10">CH5</text>
+                <!-- 時間軸刻度 (動態產生) -->
+                <g id="axisTicks"></g>
 
-                <!-- 角度標籤 -->
-                <text x="50"  y="350" fill="#666" font-size="9">0°</text>
-                <text x="137" y="350" fill="#666" font-size="9">90°</text>
-                <text x="221" y="350" fill="#666" font-size="9">180°</text>
-                <text x="308" y="350" fill="#666" font-size="9">270°</text>
-                <text x="390" y="350" fill="#666" font-size="9">360°</text>
-                <text x="483" y="350" fill="#666" font-size="9">450°</text>
-                <text x="571" y="350" fill="#666" font-size="9">540°</text>
-                <text x="658" y="350" fill="#666" font-size="9">630°</text>
-                <text x="737" y="350" fill="#666" font-size="9">720°</text>
-
-                <text x="225" y="22" fill="#444" font-size="10" text-anchor="middle">第一週期</text>
-                <text x="575" y="22" fill="#444" font-size="10" text-anchor="middle">第二週期</text>
-
-                <g id="deadTimeMarkers"></g>
-                <path id="acWave"      d="" fill="none" stroke="#ffff00" stroke-width="2"/>
-                <path id="zcdWave"     d="" fill="none" stroke="#ff6644" stroke-width="2"/>
-                <path id="upperGate"   d="" fill="none" stroke="#00ff00" stroke-width="2"/>
-                <path id="lowerGate"   d="" fill="none" stroke="#00bfff" stroke-width="2"/>
-                <path id="combinedGate" d="" fill="none" stroke="#aaff44" stroke-width="2"/>
-                <line id="timeIndicator" x1="50" y1="10" x2="50" y2="330" stroke="#ff0000" stroke-width="2" opacity="0.8"/>
+                <g clip-path="url(#plotClip)">
+                    <g id="deadTimeMarkers"></g>
+                    <g id="diodeMarkers"></g>
+                    <path id="acWave"       d="" fill="none" stroke="#ffff00" stroke-width="2"/>
+                    <path id="zcdWave"      d="" fill="none" stroke="#ff6644" stroke-width="2"/>
+                    <path id="upperGate"    d="" fill="none" stroke="#00ff00" stroke-width="2"/>
+                    <path id="lowerGate"    d="" fill="none" stroke="#00bfff" stroke-width="2"/>
+                    <path id="combinedGate" d="" fill="none" stroke="#aaff44" stroke-width="2"/>
+                    <path id="q1VdsWave"    d="" fill="none" stroke="#00ff00" stroke-width="2"/>
+                    <path id="q2VdsWave"    d="" fill="none" stroke="#00bfff" stroke-width="2"/>
+                    <line id="timeIndicator" x1="50" y1="10" x2="50" y2="500" stroke="#ff0000" stroke-width="2" opacity="0.8"/>
+                    <line id="cursorLine" x1="50" y1="10" x2="50" y2="500" stroke="#ffffff" stroke-width="1" stroke-dasharray="4,3" opacity="0"/>
+                </g>
             </svg>
+            <div class="cursor-readout" id="cursorReadout">
+                <div class="ro-hint">滑鼠移到波形上即可讀值 · 點一下鎖定/解鎖游標 · 滾輪縮放 · 拖曳平移 · 雙擊還原</div>
+            </div>
         </div>
 
         <!-- Analysis Section -->
@@ -862,6 +1014,12 @@
                 <p class="warning">注意事項：</p>
                 <p class="warning">• Dead Time 仍需存在以確保開關安全轉換</p>
                 <p class="warning">• 建議 Dead Time 保持最小值以減少切換損耗</p>
+
+                <p><strong>Vds 波形與非理想模型說明</strong></p>
+                <p>• 理想狀態下，正半週由 <span class="highlight">Q1 阻斷</span>：Q1 OFF 時 Q1 Vds ≈ 當下 Vac；Q2 Vds ≈ 0。負半週由 <span class="highlight">Q2 阻斷</span>，角色互換。</p>
+                <p>• 後沿調光的關斷瞬間，阻斷元件的 Vds 會從 0 升到當下 Vac 瞬時值；非理想模式下這段上升發生在 Miller 平台期間，dv/dt 由 tf 與平台長度決定（這就是後沿調光降低 EMI 的方式）。</p>
+                <p>• 若第一顆 MOS 的通道還沒完全關斷（平台尚未結束），第二顆的 Vgs 就已經低於 Vth，電流會改走第二顆的<span class="warning">體二極體</span>，波形上以紅色區域標示。</p>
+                <p class="warning">模型簡化：純電阻負載、Vgs 為線性斜坡、Vth/平台電壓固定（3V/5V）、平台長度 ∝ |Vac|、忽略 Rds(on) 壓降、寄生電容 Coss 與驅動延遲。數值僅供觀察趨勢，不代表特定元件的實測值。</p>
             </div>
         </div>
     </div>
@@ -871,22 +1029,39 @@
             scopeWidth: 700,
             scopeStartX: 50,
             scopeEndX: 750,
-            // 框1: CH1 AC (y=10~140)
+            // 框1: AC (y=10~140)
             acCenterY: 55,
             acAmplitude: 32,
-            // 框1: CH2 ZCD (下半段 y=100~140)
+            // 框1: ZCD (下半段 y=100~140)
             zcdBaseY: 125,
             zcdAmplitude: 14,
             zcdPulseWidth: 8,
-            // 框2: CH3 Q1 / CH4 Q2 / CH5 Combined (y=150~330)
-            upperGateY: 185,
-            lowerGateY: 225,
-            gateAmplitude: 16,
-            combinedBaseY: 295,
-            combinedAmplitude: 22,
+            // 框2: Q1 Vgs / Q2 Vgs / 負載導通 (y=150~330)
+            upperGateY: 205,
+            lowerGateY: 265,
+            gateAmplitude: 45,
+            combinedBaseY: 322,
+            combinedAmplitude: 42,
+            // 框3: Q1 Vds / Q2 Vds (y=340~500)
+            q1VdsBaseY: 415,
+            q2VdsBaseY: 492,
+            vdsAmplitude: 65,
             totalDegrees: 720,
             animationSpeed: 8000
         };
+
+        // 元件參數 (簡化模型)
+        const phys = {
+            vPeak: 110 * Math.SQRT2, // 110Vrms 峰值
+            vDrive: 12,              // Gate 驅動電壓
+            vth: 3,                  // 閾值電壓
+            vPlateau: 5,             // Miller 平台電壓
+            vDiode: 0.7              // 體二極體順向壓降
+        };
+
+        // 模擬步長 (度), 一個週期的取樣點數
+        const SIM_STEP = 0.01;
+        const SIM_N = Math.round(360 / SIM_STEP);
 
         let dimmingPercent = 50;
         let deadTime1 = 5;
@@ -898,6 +1073,16 @@
         let isPaused = false;
         let stepPoints = [];
         let dt2Mode = 'A'; // 'A': 固定延遲, 'B': ZCD前OFF
+        let lineFreq = 60;
+        let nonIdeal = false;
+        let riseUs = 20;
+        let fallUs = 100;
+        let millerRatio = 0.5;
+        let sim = null;
+        // 示波器可視範圍 (度)
+        let view = { start: 0, span: 720 };
+        let cursorPhase = null;
+        let cursorLocked = false;
 
         const dimmingSlider = document.getElementById('dimmingSlider');
         const dimmingValueDisplay = document.getElementById('dimmingValue');
@@ -935,6 +1120,23 @@
         const combinedGate = document.getElementById('combinedGate');
         const ledRays = document.getElementById('ledRays');
         const ledGlowCircle = document.getElementById('ledGlowCircle');
+        const q1VdsWave = document.getElementById('q1VdsWave');
+        const q2VdsWave = document.getElementById('q2VdsWave');
+        const diodeMarkers = document.getElementById('diodeMarkers');
+        const axisTicks = document.getElementById('axisTicks');
+        const cursorLine = document.getElementById('cursorLine');
+        const cursorReadout = document.getElementById('cursorReadout');
+        const scopeSvg = document.getElementById('scopeSvg');
+        const viewInfo = document.getElementById('viewInfo');
+        const gateRefLines = document.getElementById('gateRefLines');
+        const diodeSummary = document.getElementById('diodeSummary');
+        const nonIdealPanel = document.getElementById('nonIdealPanel');
+        const gateIdealBtn = document.getElementById('gateIdealBtn');
+        const gateNonIdealBtn = document.getElementById('gateNonIdealBtn');
+        const riseSlider = document.getElementById('riseSlider');
+        const fallSlider = document.getElementById('fallSlider');
+        const millerSlider = document.getElementById('millerSlider');
+        const freqBtns = document.querySelectorAll('.freq-btn');
 
         function getConductionAngle(percent) {
             const maxAngle = 180 - deadTime1 - deadTime2;
@@ -942,82 +1144,199 @@
         }
 
         function degreesToX(deg) {
-            return config.scopeStartX + (deg / config.totalDegrees) * config.scopeWidth;
+            return config.scopeStartX + ((deg - view.start) / view.span) * config.scopeWidth;
         }
 
-        function generateAcWave() {
-            let path = `M ${config.scopeStartX} ${config.acCenterY}`;
-            for (let x = 0; x <= config.scopeWidth; x++) {
-                const deg = (x / config.scopeWidth) * config.totalDegrees;
-                const rad = (deg * Math.PI) / 180;
-                const y = config.acCenterY - Math.sin(rad) * config.acAmplitude;
-                path += ` L ${config.scopeStartX + x} ${y}`;
-            }
-            return path;
+        function xToDegrees(x) {
+            return view.start + ((x - config.scopeStartX) / config.scopeWidth) * view.span;
         }
 
-        function generateGatePaths(conductionEndAngle) {
-            const q1BaseY = config.upperGateY;
-            const q2BaseY = config.lowerGateY;
-            const highOffset = -config.gateAmplitude;
+        function usToDeg(us) {
+            return us * 1e-6 * lineFreq * 360;
+        }
 
-            let q1Path = `M ${config.scopeStartX} ${q1BaseY}`;
-            let q2Path = `M ${config.scopeStartX} ${q2BaseY}`;
+        function degToUs(deg) {
+            return deg / (lineFreq * 360) * 1e6;
+        }
 
-            for (let cycle = 0; cycle < 2; cycle++) {
-                const offset = cycle * 360;
+        function formatTime(us) {
+            if (Math.abs(us) >= 1000) return `${(us / 1000).toFixed(2)} ms`;
+            return `${us.toFixed(1)} µs`;
+        }
 
-                // Positive half: Q2 ON first, then Q1
-                const posQ1On  = offset + deadTime1;
-                const posQ1Off = offset + conductionEndAngle;
-                // Mode A: Q2 OFF = conductionEndAngle + deadTime2
-                // Mode B: Q2 OFF = 180 - deadTime2 (before ZCD)
-                const posQ2Off = dt2Mode === 'A'
-                    ? offset + conductionEndAngle + deadTime2
-                    : offset + 180 - deadTime2;
+        function formatDeg(deg) {
+            const digits = view.span >= 90 ? 0 : (view.span >= 9 ? 1 : 2);
+            return `${deg.toFixed(digits)}°`;
+        }
 
-                q1Path += ` L ${degreesToX(posQ1On)} ${q1BaseY}`;
-                if (conductionEndAngle > deadTime1) {
-                    q1Path += ` L ${degreesToX(posQ1On)} ${q1BaseY + highOffset}`;
-                    q1Path += ` L ${degreesToX(posQ1Off)} ${q1BaseY + highOffset}`;
-                    q1Path += ` L ${degreesToX(posQ1Off)} ${q1BaseY}`;
-                }
-                q1Path += ` L ${degreesToX(offset + 180)} ${q1BaseY}`;
-
-                q2Path += ` L ${degreesToX(offset + 0)} ${q2BaseY}`;
-                if (conductionEndAngle > deadTime1) {
-                    q2Path += ` L ${degreesToX(offset + 0)} ${q2BaseY + highOffset}`;
-                    q2Path += ` L ${degreesToX(Math.min(posQ2Off, offset + 180))} ${q2BaseY + highOffset}`;
-                    q2Path += ` L ${degreesToX(Math.min(posQ2Off, offset + 180))} ${q2BaseY}`;
-                }
-                q2Path += ` L ${degreesToX(offset + 180)} ${q2BaseY}`;
-
-                // Negative half: Q1 ON first, then Q2
-                const negQ1On  = offset + 180;
-                const negQ2On  = offset + 180 + deadTime1;
-                const negQ2Off = offset + 180 + conductionEndAngle;
-                const negQ1Off = dt2Mode === 'A'
-                    ? offset + 180 + conductionEndAngle + deadTime2
-                    : offset + 360 - deadTime2;
-
-                q1Path += ` L ${degreesToX(negQ1On)} ${q1BaseY}`;
-                if (conductionEndAngle > deadTime1) {
-                    q1Path += ` L ${degreesToX(negQ1On)} ${q1BaseY + highOffset}`;
-                    q1Path += ` L ${degreesToX(Math.min(negQ1Off, offset + 360))} ${q1BaseY + highOffset}`;
-                    q1Path += ` L ${degreesToX(Math.min(negQ1Off, offset + 360))} ${q1BaseY}`;
-                }
-                q1Path += ` L ${degreesToX(offset + 360)} ${q1BaseY}`;
-
-                q2Path += ` L ${degreesToX(negQ2On)} ${q2BaseY}`;
-                if (conductionEndAngle > deadTime1) {
-                    q2Path += ` L ${degreesToX(negQ2On)} ${q2BaseY + highOffset}`;
-                    q2Path += ` L ${degreesToX(negQ2Off)} ${q2BaseY + highOffset}`;
-                    q2Path += ` L ${degreesToX(negQ2Off)} ${q2BaseY}`;
-                }
-                q2Path += ` L ${degreesToX(offset + 360)} ${q2BaseY}`;
+        // 理想 Gate 指令 (0/1)，phase 為 0~360
+        function getGateCommands(phase, conductionEndAngle) {
+            let q1 = 0;
+            let q2 = 0;
+            if (conductionEndAngle <= deadTime1) return { q1, q2 };
+            // 第二顆 MOS 的 OFF 時間點 — Mode A: 關斷後 +DT2；Mode B: ZCD 前 DT2
+            const secondOff = Math.min(
+                dt2Mode === 'A' ? conductionEndAngle + deadTime2 : 180 - deadTime2,
+                180
+            );
+            if (phase < 180) {
+                if (phase >= deadTime1 && phase < conductionEndAngle) q1 = 1;
+                if (phase < secondOff) q2 = 1;
+            } else {
+                const negPhase = phase - 180;
+                if (negPhase < secondOff) q1 = 1;
+                if (negPhase >= deadTime1 && negPhase < conductionEndAngle) q2 = 1;
             }
+            return { q1, q2 };
+        }
 
-            return { q1Path, q2Path };
+        // 時間步進模擬 (純電阻負載)
+        // 正半週由 Q1 阻斷電壓 (硬切換，有 Miller 平台)，Q2 為 ZVS (無平台)；負半週角色互換
+        // 理想模式 = tr、tf、平台皆為 0
+        function runSimulation() {
+            const conductionEndAngle = getConductionAngle(dimmingPercent);
+            const trDeg = nonIdeal ? usToDeg(riseUs) : 0;
+            const tfDeg = nonIdeal ? usToDeg(fallUs) : 0;
+            const k = nonIdeal ? millerRatio : 0;
+            const slopeR = trDeg > 0 ? phys.vDrive / trDeg : Infinity;
+            const slopeF = tfDeg > 0 ? phys.vDrive / tfDeg : Infinity;
+            const { vDrive, vth, vPlateau, vPeak, vDiode } = phys;
+
+            const out = {
+                vgs: [new Float32Array(SIM_N), new Float32Array(SIM_N)],
+                vds: [new Float32Array(SIM_N), new Float32Array(SIM_N)],
+                cond: new Float32Array(SIM_N),   // 阻斷元件通道導通程度 0~1
+                iLoad: new Float32Array(SIM_N),  // 負載電流 (以峰值電流正規化)
+                diode: new Uint8Array(SIM_N),    // 0: 無, 1: Q1 體二極體, 2: Q2 體二極體
+                diodeDeg: 0
+            };
+
+            const g = [0, 0];  // Vgs
+            const s = [0, 0];  // 通道導通程度 (硬切換元件)
+            let prevHard = -1;
+
+            // 跑兩個週期，只記錄第二個週期 (週期性穩態)
+            for (let pass = 0; pass < 2; pass++) {
+                for (let i = 0; i < SIM_N; i++) {
+                    const phase = i * SIM_STEP;
+                    const sinV = Math.sin(phase * Math.PI / 180);
+                    const absSin = Math.abs(sinV);
+                    const hard = phase < 180 ? 0 : 1;
+                    const soft = 1 - hard;
+                    const cmd = getGateCommands(phase, conductionEndAngle);
+                    const cmds = [cmd.q1, cmd.q2];
+
+                    // 換半週: 新的阻斷元件依目前 Vgs 推定通道狀態
+                    if (hard !== prevHard) {
+                        const v = g[hard];
+                        s[hard] = v >= vPlateau ? 1 : (v > vth ? (v - vth) / (vPlateau - vth) : 0);
+                        prevHard = hard;
+                    }
+
+                    // 軟切換元件: 純斜坡 (Vds≈0，無 Miller 平台)
+                    g[soft] = cmds[soft]
+                        ? Math.min(vDrive, g[soft] + slopeR * SIM_STEP)
+                        : Math.max(0, g[soft] - slopeF * SIM_STEP);
+
+                    // 硬切換元件: 斜坡 → Miller 平台 (通道切換、Vds 變化) → 斜坡
+                    // 平台長度 ∝ 當下 |Vac| (Qgd × ΔVds 的簡化)
+                    const platOn = k * trDeg * absSin;
+                    const platOff = k * tfDeg * absSin;
+                    if (cmds[hard]) {
+                        if (s[hard] >= 1) {
+                            g[hard] = Math.min(vDrive, g[hard] + slopeR * SIM_STEP);
+                        } else if (g[hard] < vPlateau) {
+                            g[hard] = Math.min(vPlateau, g[hard] + slopeR * SIM_STEP);
+                        } else {
+                            s[hard] = platOn > 0 ? Math.min(1, s[hard] + SIM_STEP / platOn) : 1;
+                        }
+                    } else {
+                        if (s[hard] <= 0) {
+                            g[hard] = Math.max(0, g[hard] - slopeF * SIM_STEP);
+                        } else if (g[hard] > vPlateau) {
+                            g[hard] = Math.max(vPlateau, g[hard] - slopeF * SIM_STEP);
+                        } else {
+                            s[hard] = platOff > 0 ? Math.max(0, s[hard] - SIM_STEP / platOff) : 0;
+                        }
+                    }
+
+                    // 電流一定流經軟切換元件；其通道未開 (Vgs < Vth) 時改走體二極體
+                    const conduction = s[hard];
+                    const iLoad = sinV * conduction;
+                    const diodeOn = Math.abs(iLoad) > 0.005 && g[soft] <= vth;
+
+                    if (pass === 1) {
+                        out.vgs[0][i] = g[0];
+                        out.vgs[1][i] = g[1];
+                        out.vds[hard][i] = vPeak * absSin * (1 - conduction);
+                        out.vds[soft][i] = diodeOn ? -vDiode : 0;
+                        out.cond[i] = conduction;
+                        out.iLoad[i] = iLoad;
+                        if (diodeOn) {
+                            out.diode[i] = soft + 1;
+                            out.diodeDeg += SIM_STEP;
+                        }
+                    }
+                }
+            }
+            return out;
+        }
+
+        function sampleIndex(phase) {
+            const p = ((phase % 360) + 360) % 360;
+            return Math.round(p / SIM_STEP) % SIM_N;
+        }
+
+        // 依可視範圍產生波形路徑；取樣比像素密時每個像素欄取 min/max，避免遺漏快速邊緣
+        function buildTrace(valueAt, baseY, scale) {
+            const startIdx = Math.max(0, Math.floor(view.start / SIM_STEP));
+            const endIdx = Math.min(2 * SIM_N, Math.ceil((view.start + view.span) / SIM_STEP));
+            const pxPerSample = config.scopeWidth * SIM_STEP / view.span;
+            const toY = v => (baseY - v * scale).toFixed(2);
+            const pts = [];
+
+            if (pxPerSample >= 0.5) {
+                for (let i = startIdx; i <= endIdx; i++) {
+                    pts.push(`${degreesToX(i * SIM_STEP).toFixed(2)} ${toY(valueAt(i % SIM_N))}`);
+                }
+            } else {
+                let col = null, minV = 0, maxV = 0, minI = 0, maxI = 0;
+                const flush = () => {
+                    if (col === null) return;
+                    const lo = `${col} ${toY(minV)}`;
+                    const hi = `${col} ${toY(maxV)}`;
+                    if (minV === maxV) pts.push(lo);
+                    else if (minI < maxI) pts.push(lo, hi);
+                    else pts.push(hi, lo);
+                };
+                for (let i = startIdx; i <= endIdx; i++) {
+                    const c = Math.floor(degreesToX(i * SIM_STEP));
+                    const v = valueAt(i % SIM_N);
+                    if (c !== col) {
+                        flush();
+                        col = c;
+                        minV = maxV = v;
+                        minI = maxI = i;
+                    } else {
+                        if (v < minV) { minV = v; minI = i; }
+                        if (v > maxV) { maxV = v; maxI = i; }
+                    }
+                }
+                flush();
+            }
+            return pts.length ? 'M ' + pts.join(' L ') : '';
+        }
+
+        // 三個框的 y 範圍
+        const FRAMES = [[10, 130], [150, 180], [340, 160]];
+
+        function band(start, end, color, opacity) {
+            if (end <= start) return '';
+            const x = degreesToX(start);
+            const w = degreesToX(end) - x;
+            return FRAMES.map(([y, h]) =>
+                `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${color}" opacity="${opacity}"/>`
+            ).join('');
         }
 
         function updateDeadTimeMarkers(conductionEndAngle) {
@@ -1025,128 +1344,262 @@
             for (let cycle = 0; cycle < 2; cycle++) {
                 const offset = cycle * 360;
 
-                const posDT1Start = offset + 0;
-                const posDT1End = offset + deadTime1;
-                markers += `<rect x="${degreesToX(posDT1Start)}" y="10" width="${degreesToX(posDT1End) - degreesToX(posDT1Start)}" height="130" fill="#ff9900" opacity="0.12"/>`;
-                // 框2 DT1
-                markers += `<rect x="${degreesToX(posDT1Start)}" y="150" width="${degreesToX(posDT1End) - degreesToX(posDT1Start)}" height="180" fill="#ff9900" opacity="0.12"/>`;
-
-                const negDT1Start = offset + 180;
-                const negDT1End = offset + 180 + deadTime1;
-                markers += `<rect x="${degreesToX(negDT1Start)}" y="10" width="${degreesToX(negDT1End) - degreesToX(negDT1Start)}" height="130" fill="#ff9900" opacity="0.12"/>`;
-                markers += `<rect x="${degreesToX(negDT1Start)}" y="150" width="${degreesToX(negDT1End) - degreesToX(negDT1Start)}" height="180" fill="#ff9900" opacity="0.12"/>`;
+                markers += band(offset, offset + deadTime1, '#ff9900', 0.12);
+                markers += band(offset + 180, offset + 180 + deadTime1, '#ff9900', 0.12);
 
                 if (conductionEndAngle > deadTime1) {
                     // DT2 區域: Q1 OFF → Q2 OFF (Mode A) 或 Q1 OFF → ZCD前DT2 (Mode B)
-                    const posDT2Start = offset + conductionEndAngle;
-                    const posDT2End = dt2Mode === 'A'
-                        ? Math.min(offset + conductionEndAngle + deadTime2, offset + 180)
-                        : offset + 180 - deadTime2;
-                    if (posDT2End > posDT2Start) {
-                        markers += `<rect x="${degreesToX(posDT2Start)}" y="10" width="${degreesToX(posDT2End) - degreesToX(posDT2Start)}" height="130" fill="#ff66cc" opacity="0.12"/>`;
-                        markers += `<rect x="${degreesToX(posDT2Start)}" y="150" width="${degreesToX(posDT2End) - degreesToX(posDT2Start)}" height="180" fill="#ff66cc" opacity="0.12"/>`;
-                    }
-                    // Mode B: 額外標示 ZCD前DT2 的區域
-                    if (dt2Mode === 'B') {
-                        const posZcdGuardStart = offset + 180 - deadTime2;
-                        markers += `<rect x="${degreesToX(posZcdGuardStart)}" y="10" width="${degreesToX(offset + 180) - degreesToX(posZcdGuardStart)}" height="130" fill="#ff66cc" opacity="0.25"/>`;
-                        markers += `<rect x="${degreesToX(posZcdGuardStart)}" y="150" width="${degreesToX(offset + 180) - degreesToX(posZcdGuardStart)}" height="180" fill="#ff66cc" opacity="0.25"/>`;
-                    }
-
-                    const negDT2Start = offset + 180 + conductionEndAngle;
-                    const negDT2End = dt2Mode === 'A'
-                        ? Math.min(offset + 180 + conductionEndAngle + deadTime2, offset + 360)
-                        : offset + 360 - deadTime2;
-                    if (negDT2End > negDT2Start) {
-                        markers += `<rect x="${degreesToX(negDT2Start)}" y="10" width="${degreesToX(negDT2End) - degreesToX(negDT2Start)}" height="130" fill="#ff66cc" opacity="0.12"/>`;
-                        markers += `<rect x="${degreesToX(negDT2Start)}" y="150" width="${degreesToX(negDT2End) - degreesToX(negDT2Start)}" height="180" fill="#ff66cc" opacity="0.12"/>`;
-                    }
-                    if (dt2Mode === 'B') {
-                        const negZcdGuardStart = offset + 360 - deadTime2;
-                        markers += `<rect x="${degreesToX(negZcdGuardStart)}" y="10" width="${degreesToX(offset + 360) - degreesToX(negZcdGuardStart)}" height="130" fill="#ff66cc" opacity="0.25"/>`;
-                        markers += `<rect x="${degreesToX(negZcdGuardStart)}" y="150" width="${degreesToX(offset + 360) - degreesToX(negZcdGuardStart)}" height="180" fill="#ff66cc" opacity="0.25"/>`;
+                    for (const half of [0, 180]) {
+                        const dt2Start = offset + half + conductionEndAngle;
+                        const dt2End = dt2Mode === 'A'
+                            ? Math.min(dt2Start + deadTime2, offset + half + 180)
+                            : offset + half + 180 - deadTime2;
+                        markers += band(dt2Start, dt2End, '#ff66cc', 0.12);
+                        // Mode B: 額外標示 ZCD前DT2 的區域
+                        if (dt2Mode === 'B') {
+                            markers += band(offset + half + 180 - deadTime2, offset + half + 180, '#ff66cc', 0.25);
+                        }
                     }
                 }
             }
             deadTimeMarkers.innerHTML = markers;
         }
 
-        // CH4: ZCD 波形 - 在每個過零點(0°,180°,360°,540°) 產生短方波
-        function generateZCDPath() {
-            const baseY = config.zcdBaseY;
-            const high = baseY - config.zcdAmplitude;
-            const pw = config.zcdPulseWidth; // 脈衝寬度（度）
-            let path = `M ${config.scopeStartX} ${baseY}`;
-
-            const zeroCrossings = [0, 180, 360, 540]; // 2個週期的過零點
-            let prevEnd = 0;
-
-            for (const zc of zeroCrossings) {
-                // 過零點前的低電位段
-                if (zc > prevEnd) {
-                    path += ` L ${degreesToX(zc)} ${baseY}`;
+        // 體二極體導通區間 (紅色)，至少畫 2px 寬，全圖時也看得到
+        function updateDiodeMarkers() {
+            let markers = '';
+            let runStart = -1;
+            for (let i = 0; i <= SIM_N; i++) {
+                const on = i < SIM_N && sim.diode[i] > 0;
+                if (on && runStart < 0) runStart = i;
+                if (!on && runStart >= 0) {
+                    for (const offset of [0, 360]) {
+                        const x = degreesToX(offset + runStart * SIM_STEP);
+                        const w = Math.max(2, degreesToX(offset + i * SIM_STEP) - x);
+                        markers += `<rect x="${x}" y="340" width="${w}" height="160" fill="#ff3333" opacity="0.45"/>`;
+                        markers += `<rect x="${x}" y="150" width="${w}" height="180" fill="#ff3333" opacity="0.2"/>`;
+                    }
+                    runStart = -1;
                 }
-                // 方波上升
-                path += ` L ${degreesToX(zc)} ${high}`;
-                // 保持高電位（脈衝寬度）
-                path += ` L ${degreesToX(zc + pw)} ${high}`;
-                // 方波下降
-                path += ` L ${degreesToX(zc + pw)} ${baseY}`;
-                prevEnd = zc + pw;
             }
-            // 剩餘低電位段
-            path += ` L ${config.scopeEndX} ${baseY}`;
-            return path;
+            diodeMarkers.innerHTML = markers;
         }
 
-        // CH5: 兩 MOS 都 ON 的合併導通信號
-        function generateCombinedPath(conductionEndAngle) {
-            const baseY = config.combinedBaseY;
-            const high = baseY - config.combinedAmplitude;
-            let path = `M ${config.scopeStartX} ${baseY}`;
-
-            for (let cycle = 0; cycle < 2; cycle++) {
-                const offset = cycle * 360;
-
-                // 正半週：Q1+Q2 都ON的區間 = deadTime1 ~ conductionEndAngle
-                const posOn = offset + deadTime1;
-                const posOff = offset + conductionEndAngle;
-
-                path += ` L ${degreesToX(posOn)} ${baseY}`;
-                if (conductionEndAngle > deadTime1) {
-                    path += ` L ${degreesToX(posOn)} ${high}`;
-                    path += ` L ${degreesToX(posOff)} ${high}`;
-                    path += ` L ${degreesToX(posOff)} ${baseY}`;
-                }
-
-                // 負半週：Q1+Q2 都ON的區間 = 180+deadTime1 ~ 180+conductionEndAngle
-                const negOn = offset + 180 + deadTime1;
-                const negOff = offset + 180 + conductionEndAngle;
-
-                path += ` L ${degreesToX(negOn)} ${baseY}`;
-                if (conductionEndAngle > deadTime1) {
-                    path += ` L ${degreesToX(negOn)} ${high}`;
-                    path += ` L ${degreesToX(negOff)} ${high}`;
-                    path += ` L ${degreesToX(negOff)} ${baseY}`;
-                }
-
-                path += ` L ${degreesToX(offset + 360)} ${baseY}`;
+        function updateAxisTicks() {
+            let html = '';
+            for (let k = 0; k <= 8; k++) {
+                const deg = view.start + view.span * k / 8;
+                const x = config.scopeStartX + config.scopeWidth * k / 8;
+                const anchor = k === 0 ? 'start' : (k === 8 ? 'end' : 'middle');
+                html += `<text x="${x}" y="515" text-anchor="${anchor}" fill="#888" font-size="9">${formatDeg(deg)}</text>`;
+                html += `<text x="${x}" y="528" text-anchor="${anchor}" fill="#666" font-size="8">${formatTime(degToUs(deg))}</text>`;
             }
-            return path;
+            axisTicks.innerHTML = html;
+            viewInfo.textContent = `視窗 ${formatDeg(view.span)} = ${formatTime(degToUs(view.span))}（每格 ${formatTime(degToUs(view.span / 8))}）`;
+        }
+
+        function placeVerticalLine(line, phase) {
+            const x = degreesToX(phase);
+            line.setAttribute('x1', x);
+            line.setAttribute('x2', x);
+        }
+
+        function renderScope() {
+            const conductionEndAngle = getConductionAngle(dimmingPercent);
+            const vgsScale = config.gateAmplitude / phys.vDrive;
+            const vdsScale = config.vdsAmplitude / phys.vPeak;
+
+            acWave.setAttribute('d', buildTrace(i => Math.sin(i * SIM_STEP * Math.PI / 180), config.acCenterY, config.acAmplitude));
+            zcdWave.setAttribute('d', buildTrace(i => ((i * SIM_STEP) % 180) < config.zcdPulseWidth ? 1 : 0, config.zcdBaseY, config.zcdAmplitude));
+            upperGate.setAttribute('d', buildTrace(i => sim.vgs[0][i], config.upperGateY, vgsScale));
+            lowerGate.setAttribute('d', buildTrace(i => sim.vgs[1][i], config.lowerGateY, vgsScale));
+            combinedGate.setAttribute('d', buildTrace(i => sim.cond[i], config.combinedBaseY, config.combinedAmplitude));
+            q1VdsWave.setAttribute('d', buildTrace(i => sim.vds[0][i], config.q1VdsBaseY, vdsScale));
+            q2VdsWave.setAttribute('d', buildTrace(i => sim.vds[1][i], config.q2VdsBaseY, vdsScale));
+
+            updateDeadTimeMarkers(conductionEndAngle);
+            updateDiodeMarkers();
+            updateAxisTicks();
+
+            // Vth 參考線
+            const q1VthY = config.upperGateY - phys.vth * vgsScale;
+            const q2VthY = config.lowerGateY - phys.vth * vgsScale;
+            document.getElementById('q1VthLine').setAttribute('y1', q1VthY);
+            document.getElementById('q1VthLine').setAttribute('y2', q1VthY);
+            document.getElementById('q2VthLine').setAttribute('y1', q2VthY);
+            document.getElementById('q2VthLine').setAttribute('y2', q2VthY);
+            document.getElementById('q1VthText').setAttribute('y', q1VthY - 2);
+            document.getElementById('q2VthText').setAttribute('y', q2VthY - 2);
+            gateRefLines.setAttribute('opacity', nonIdeal ? '1' : '0');
+
+            placeVerticalLine(timeIndicator, animationPhase);
+        }
+
+        function updateDeadTimeUs() {
+            document.getElementById('deadTime1Us').textContent = `(${degToUs(deadTime1).toFixed(0)}µs)`;
+            document.getElementById('deadTime2Us').textContent = `(${degToUs(deadTime2).toFixed(0)}µs)`;
+        }
+
+        function updateDiodeSummary() {
+            if (sim.diodeDeg > 0) {
+                diodeSummary.className = 'diode-warning';
+                diodeSummary.textContent = `⚠ 體二極體導通: 每週期 ${formatTime(degToUs(sim.diodeDeg))}`;
+            } else {
+                diodeSummary.className = '';
+                diodeSummary.style.color = '#00ff88';
+                diodeSummary.textContent = '體二極體導通: 無';
+            }
+        }
+
+        const READOUT_HINT = '<div class="ro-hint">滑鼠移到波形上即可讀值 · 點一下鎖定/解鎖游標 · 滾輪縮放 · 拖曳平移 · 雙擊還原</div>';
+
+        function updateReadout() {
+            if (cursorPhase === null || !sim) {
+                cursorLine.setAttribute('opacity', '0');
+                cursorReadout.innerHTML = READOUT_HINT;
+                return;
+            }
+            placeVerticalLine(cursorLine, cursorPhase);
+            cursorLine.setAttribute('opacity', '0.9');
+
+            const i = sampleIndex(cursorPhase);
+            const cyclePhase = i * SIM_STEP;
+            const vac = phys.vPeak * Math.sin(cyclePhase * Math.PI / 180);
+            const zcd = (cyclePhase % 180) < config.zcdPulseWidth;
+            const vgs1 = sim.vgs[0][i];
+            const vgs2 = sim.vgs[1][i];
+            const diode = sim.diode[i];
+            const onOff = v => v > phys.vth ? 'ON' : 'OFF';
+
+            const items = [
+                ['游標', '#fff', `${cursorPhase.toFixed(2)}°${cursorLocked ? ' 🔒' : ''}`],
+                ['時間', '#fff', formatTime(degToUs(cursorPhase))],
+                ['半週', '#fff', cyclePhase < 180 ? '正半週' : '負半週'],
+                ['AC', '#ffff00', `${vac.toFixed(1)} V`],
+                ['ZCD', '#ff6644', zcd ? 'H' : 'L'],
+                ['Q1 Vgs', '#00ff00', `${vgs1.toFixed(2)} V (${onOff(vgs1)})`],
+                ['Q2 Vgs', '#00bfff', `${vgs2.toFixed(2)} V (${onOff(vgs2)})`],
+                ['負載導通', '#aaff44', `${(sim.cond[i] * 100).toFixed(1)} %`],
+                ['負載電流', '#aaff44', `${(sim.iLoad[i] * 100).toFixed(1)} % Ipk`],
+                ['Q1 Vds', '#00ff00', `${sim.vds[0][i].toFixed(2)} V`],
+                ['Q2 Vds', '#00bfff', `${sim.vds[1][i].toFixed(2)} V`],
+                ['體二極體', diode ? '#ff3333' : '#00ff88', diode ? `⚠ Q${diode} 導通` : '無']
+            ];
+            cursorReadout.innerHTML = items.map(([label, color, value]) =>
+                `<div class="ro-item"><span class="ro-label">${label}</span><span style="color:${color}">${value}</span></div>`
+            ).join('') + READOUT_HINT;
         }
 
         function updateScope() {
             const conductionEndAngle = getConductionAngle(dimmingPercent);
-            acWave.setAttribute('d', generateAcWave());
-            const { q1Path, q2Path } = generateGatePaths(conductionEndAngle);
-            upperGate.setAttribute('d', q1Path);
-            lowerGate.setAttribute('d', q2Path);
-            zcdWave.setAttribute('d', generateZCDPath());
-            combinedGate.setAttribute('d', generateCombinedPath(conductionEndAngle));
-            updateDeadTimeMarkers(conductionEndAngle);
+            sim = runSimulation();
+            renderScope();
+            updateDiodeSummary();
+            updateDeadTimeUs();
+            updateReadout();
             const actualConduction = conductionEndAngle - deadTime1;
             angleText.textContent = `導通角: ${actualConduction.toFixed(0)}° (${dimmingPercent}%)`;
         }
+
+        // ===== 示波器縮放 / 平移 =====
+        function setView(start, span) {
+            span = Math.min(720, Math.max(0.5, span));
+            start = Math.min(720 - span, Math.max(0, start));
+            view = { start, span };
+            renderScope();
+            updateReadout();
+        }
+
+        function zoomAround(anchor, factor) {
+            const newSpan = Math.min(720, Math.max(0.5, view.span * factor));
+            const ratio = (anchor - view.start) / view.span;
+            setView(anchor - ratio * newSpan, newSpan);
+        }
+
+        function focusTurnOn() {
+            const trDeg = nonIdeal ? usToDeg(riseUs) : 0;
+            const k = nonIdeal ? millerRatio : 0;
+            const end = deadTime1 + trDeg * (1 + k);
+            const span = Math.max(2, end * 1.6 + 1);
+            setView(360 - span * 0.2, span);
+        }
+
+        function focusTurnOff() {
+            const conductionEndAngle = getConductionAngle(dimmingPercent);
+            const tfDeg = nonIdeal ? usToDeg(fallUs) : 0;
+            const k = nonIdeal ? millerRatio : 0;
+            const secondOff = Math.min(
+                dt2Mode === 'A' ? conductionEndAngle + deadTime2 : 180 - deadTime2,
+                180
+            );
+            const end = secondOff + tfDeg * (1 + k);
+            const span = Math.max(2, (end - conductionEndAngle) * 1.4 + 1);
+            setView(conductionEndAngle - span * 0.15, span);
+        }
+
+        function svgPoint(evt) {
+            const pt = scopeSvg.createSVGPoint();
+            pt.x = evt.clientX;
+            pt.y = evt.clientY;
+            return pt.matrixTransform(scopeSvg.getScreenCTM().inverse());
+        }
+
+        function clampToView(phase) {
+            return Math.min(view.start + view.span, Math.max(view.start, phase));
+        }
+
+        let drag = null;
+
+        scopeSvg.addEventListener('pointerdown', (evt) => {
+            if (evt.button !== 0) return;
+            drag = { clientX: evt.clientX, svgX: svgPoint(evt).x, viewStart: view.start, moved: false };
+            scopeSvg.setPointerCapture(evt.pointerId);
+        });
+
+        scopeSvg.addEventListener('pointermove', (evt) => {
+            const { x } = svgPoint(evt);
+            if (drag) {
+                if (Math.abs(evt.clientX - drag.clientX) > 3) drag.moved = true;
+                if (drag.moved && view.span < 720) {
+                    scopeSvg.classList.add('dragging');
+                    setView(drag.viewStart - (x - drag.svgX) / config.scopeWidth * view.span, view.span);
+                }
+            }
+            if (!cursorLocked) {
+                cursorPhase = clampToView(xToDegrees(x));
+                updateReadout();
+            }
+        });
+
+        scopeSvg.addEventListener('pointerup', (evt) => {
+            if (drag && !drag.moved) {
+                cursorLocked = !cursorLocked;
+                cursorPhase = cursorLocked ? clampToView(xToDegrees(svgPoint(evt).x)) : cursorPhase;
+                updateReadout();
+            }
+            drag = null;
+            scopeSvg.classList.remove('dragging');
+        });
+
+        scopeSvg.addEventListener('pointerleave', () => {
+            if (!cursorLocked && !drag) {
+                cursorPhase = null;
+                updateReadout();
+            }
+        });
+
+        scopeSvg.addEventListener('wheel', (evt) => {
+            evt.preventDefault();
+            zoomAround(xToDegrees(svgPoint(evt).x), evt.deltaY < 0 ? 1 / 1.25 : 1.25);
+        }, { passive: false });
+
+        scopeSvg.addEventListener('dblclick', () => setView(0, 720));
+
+        document.getElementById('viewResetBtn').addEventListener('click', () => setView(0, 720));
+        document.getElementById('viewZoomInBtn').addEventListener('click', () => zoomAround(view.start + view.span / 2, 0.5));
+        document.getElementById('viewZoomOutBtn').addEventListener('click', () => zoomAround(view.start + view.span / 2, 2));
+        document.getElementById('viewTurnOnBtn').addEventListener('click', focusTurnOn);
+        document.getElementById('viewTurnOffBtn').addEventListener('click', focusTurnOff);
 
         // 計算 Mode B 第二個 MOS 的 OFF 時間點
         // 正半週: Q2 OFF 在 (180 - deadTime2)
@@ -1221,8 +1674,12 @@
         }
 
         function updateCircuitState(phase) {
-            const { q1On, q2On, inDT1, inDT2, stateDesc, phaseDesc } = getMosStates(phase);
-            const bothOn = q1On && q2On;
+            const { inDT1, inDT2, stateDesc, phaseDesc } = getMosStates(phase);
+            // MOS 狀態以模擬的 Vgs > Vth 判斷；負載是否導通以阻斷元件通道判斷
+            const i = sampleIndex(phase);
+            const q1On = sim.vgs[0][i] > phys.vth;
+            const q2On = sim.vgs[1][i] > phys.vth;
+            const bothOn = sim.cond[i] > 0.01;
             const normalizedPhase = ((phase % 360) + 360) % 360;
             const isPositiveHalf = normalizedPhase < 180;
 
@@ -1269,10 +1726,7 @@
             phaseText.textContent = phaseDesc;
             stateText.textContent = stateDesc;
 
-            const displayPhase = phase % config.totalDegrees;
-            const indicatorX = config.scopeStartX + (displayPhase / config.totalDegrees) * config.scopeWidth;
-            timeIndicator.setAttribute('x1', indicatorX);
-            timeIndicator.setAttribute('x2', indicatorX);
+            placeVerticalLine(timeIndicator, phase % config.totalDegrees);
         }
 
         function animate(timestamp) {
@@ -1389,6 +1843,45 @@
             updateScope();
             calculateStepPoints();
         }
+
+        // Gate 模型切換 (理想 / 非理想)
+        function setGateModel(useNonIdeal) {
+            nonIdeal = useNonIdeal;
+            gateIdealBtn.classList.toggle('active', !useNonIdeal);
+            gateNonIdealBtn.classList.toggle('active', useNonIdeal);
+            nonIdealPanel.classList.toggle('hidden', !useNonIdeal);
+            updateScope();
+        }
+
+        gateIdealBtn.addEventListener('click', () => setGateModel(false));
+        gateNonIdealBtn.addEventListener('click', () => setGateModel(true));
+
+        riseSlider.addEventListener('input', (e) => {
+            riseUs = parseInt(e.target.value);
+            document.getElementById('riseValue').textContent = riseUs;
+            updateScope();
+        });
+
+        fallSlider.addEventListener('input', (e) => {
+            fallUs = parseInt(e.target.value);
+            document.getElementById('fallValue').textContent = fallUs;
+            updateScope();
+        });
+
+        millerSlider.addEventListener('input', (e) => {
+            millerRatio = parseInt(e.target.value) / 100;
+            document.getElementById('millerValue').textContent = e.target.value;
+            updateScope();
+        });
+
+        freqBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                freqBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                lineFreq = parseInt(btn.dataset.freq);
+                updateScope();
+            });
+        });
 
         dt2ModeABtn.addEventListener('click', () => setDT2Mode('A'));
         dt2ModeBBtn.addEventListener('click', () => setDT2Mode('B'));
